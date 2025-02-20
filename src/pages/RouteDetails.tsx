@@ -35,8 +35,12 @@ function RoutingMachine({ map, start, end }: { map: L.Map; start: [number, numbe
   React.useEffect(() => {
     if (!map) return;
 
-    if (routingControl.current) {
-      routingControl.current.remove();
+    if (routingControl.current && map) {
+      try {
+        routingControl.current.remove();
+      } catch (err) {
+        console.warn('Error removing control:', err);
+      }
     }
 
     // @ts-ignore - leaflet-routing-machine types are not available
@@ -62,8 +66,13 @@ function RoutingMachine({ map, start, end }: { map: L.Map; start: [number, numbe
     .on('routesfound', handleRouteFound).addTo(map);
 
     return () => {
-      if (routingControl.current) {
-        routingControl.current.remove();
+      try {
+        if (routingControl.current && map) {
+          routingControl.current.remove();
+          routingControl.current = null;
+        }
+      } catch (err) {
+        console.warn('Error removing control:', err);
       }
     };
   }, [start, end, map]);
@@ -298,15 +307,30 @@ export function RouteDetails() {
       if (fileInputRef.current?.files?.length) {
         // Handle file upload
         const file = fileInputRef.current.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          throw new Error('Photo must be less than 5MB');
+        }
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error('File must be an image');
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error('Photo must be less than 5MB');
+        }
+
         const reader = new FileReader();
         const base64String = await new Promise<string>((resolve, reject) => {
           reader.onload = () => {
-            const base64 = reader.result as string;
-            resolve(base64.split(',')[1]); // Remove data URL prefix
+            // Keep the full data URL
+            resolve(reader.result as string);
           };
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
+
         photoData.photo_blob = base64String;
       } else if (photoUrl) {
         // Handle URL
@@ -428,7 +452,7 @@ export function RouteDetails() {
                     <ThumbsUp className={`h-5 w-5 mr-2 ${
                       userRating === 'up' ? 'text-green-600' : 'text-gray-400'
                     }`} />
-                    <span className={userRating === 'up' ? 'text-green-700 dark:text-green-300' : ''}>
+                    <span className={userRating === 'up' ? 'text-green-700 dark:text-green-300' : 'dark:text-gray-400'}>
                       {upvotes}
                     </span>
                   </button>
@@ -454,7 +478,7 @@ export function RouteDetails() {
                     <ThumbsDown className={`h-5 w-5 mr-2 ${
                       userRating === 'down' ? 'text-red-600' : 'text-gray-400'
                     }`} />
-                    <span className={userRating === 'down' ? 'text-red-700 dark:text-red-300' : ''}>
+                    <span className={userRating === 'down' ? 'text-red-700 dark:text-red-300' : 'dark:text-gray-400'}>
                       {downvotes}
                     </span>
                   </button>
@@ -486,7 +510,7 @@ export function RouteDetails() {
                     className={`flex items-center px-4 py-2 border rounded-lg transition-colors ${
                       isBookmarked
                         ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300'
-                        : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-400'
                     }`}
                   >
                     <Bookmark className={`h-5 w-5 mr-2 ${
@@ -722,12 +746,10 @@ export function RouteDetails() {
                   .sort((a, b) => a.order - b.order)
                   .map((photo) => (
                     <div key={photo.id} className="relative">
-                      <img 
+                      <img
                         src={
                           photo.photo_url || 
-                          (photo.photo_blob && photo.photo_blob.length > 0 
-                            ? `data:image/jpeg;base64,${photo.photo_blob}` 
-                            : DEFAULT_PHOTO)
+                          (photo.photo_blob ? photo.photo_blob : DEFAULT_PHOTO)
                         }
                         alt={photo.caption || 'Route photo'}
                         className="rounded-lg w-full aspect-[4/3] object-cover bg-gray-100 dark:bg-gray-700"

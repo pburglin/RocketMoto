@@ -43,8 +43,11 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
       
       if (firstPhoto.photo_url) {
         setCoverPhotoUrl(firstPhoto.photo_url);
-      } else if (firstPhoto.photo_blob && firstPhoto.photo_blob.length > 0) {
-        setCoverPhotoUrl(`data:image/jpeg;base64,${firstPhoto.photo_blob}`);
+      } else if (firstPhoto.photo_blob) {
+        // photo_blob should already be a complete data URL
+        setCoverPhotoUrl(firstPhoto.photo_blob);
+      } else {
+        setCoverPhotoUrl(DEFAULT_PHOTO);
       }
     }
     
