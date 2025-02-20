@@ -139,9 +139,9 @@ export function FAQ() {
 
         <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-6">
           <h2 className="text-lg font-medium text-indigo-900 dark:text-indigo-100 mb-2">Need more help?</h2>
-          <p className="text-indigo-700 dark:text-indigo-300">
-            Have a question that's not answered here? Feel free to contact us or ask the community in the route comments.
-          </p>
+            <p className="text-indigo-700 dark:text-indigo-300">
+            Have a question that's not answered here? Feel free to <a href="https://github.com/pburglin/RocketMoto/issues" className="underline">contact us via a GitHub issue</a> or ask the community in the route comments.
+            </p>
         </div>
       </div>
     </div>
