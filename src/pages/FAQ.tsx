@@ -18,9 +18,8 @@ export function FAQ() {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">How do I find routes near me?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     1. Click the "Use my current location" button on the home page<br />
-                    2. Browse the map to see nearby routes<br />
+                    2. Browse the map to see nearby featured routes<br />
                     3. Use the search page to filter by distance, tags, and more<br />
-                    4. Routes are color-coded on the map - brighter routes are more popular
                   </p>
                 </div>
               </div>
@@ -32,7 +31,7 @@ export function FAQ() {
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">What do the route tags mean?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
-                    Routes are tagged with key characteristics:
+                    Routes are tagged with key characteristics like:
                   </p>
                   <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• <strong>Scenic</strong> - Beautiful views and landscapes</li>
@@ -59,9 +58,10 @@ export function FAQ() {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">How do I navigate a route?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     1. Open the route details page<br />
-                    2. Click either "Navigate to Start" or "Navigate to End"<br />
+                    2. Click "Navigate to Start Point" to go from current location to the starting pointt<br />
                     3. The app will open Google Maps with turn-by-turn directions<br />
-                    4. Your current location will be used as the starting point
+                    4. Then go back to RocketMoto.US and click "Navigate to End Point"<br />
+                    5. Your current location will be used as the starting point
                   </p>
                 </div>
               </div>
@@ -76,7 +76,7 @@ export function FAQ() {
                     After creating an account, you can:
                   </p>
                   <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
-                    <li>• Give routes a thumbs up or down</li>
+                    <li>• Rate routes with a thumbs up or down</li>
                     <li>• Leave detailed comments about your experience</li>
                     <li>• Share tips about road conditions or points of interest</li>
                     <li>• Help other riders by rating accuracy and enjoyment</li>
@@ -103,8 +103,9 @@ export function FAQ() {
                     &nbsp;&nbsp;&nbsp;• Entering addresses<br />
                     &nbsp;&nbsp;&nbsp;• Entering coordinates<br />
                     &nbsp;&nbsp;&nbsp;• Clicking points on the map<br />
-                    4. Add a title, description, and tags<br />
-                    5. The route will automatically calculate distance and duration
+                    4. Click "Map Route" and confirm the route is correct; adjust it as needed<br />
+                    4. Add a route title, description, and tags<br />
+                    5. The app will automatically calculate distance and duration
                   </p>
                 </div>
               </div>
@@ -131,6 +132,24 @@ export function FAQ() {
                     <li>5. Add an optional caption</li>
                     <li>6. Photos help other riders identify landmarks and conditions</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Offline Maps</h2>
+          
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <Map className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Should I download offline maps?</h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Yes! For routes in areas with limited or unreliable cellphone signal, we highly recommend downloading offline maps in Google Maps. This ensures you can still navigate the route even without internet connection.
+                  </p>
                 </div>
               </div>
             </div>
