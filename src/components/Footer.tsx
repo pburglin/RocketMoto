@@ -29,7 +29,7 @@ export function Footer() {
               </li>
               <li>
                 <a 
-                  href="https://github.com/yourusername/motorcycle-route-explorer"
+                  href="https://github.com/pburglin/RocketMoto"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"

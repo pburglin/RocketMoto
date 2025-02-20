@@ -115,7 +115,7 @@ export function RouteDetails() {
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const { userRating, upvotes, downvotes, rateRoute, loading: ratingLoading, error: ratingError } = useRating(id || '');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const DEFAULT_PHOTO = 'https://source.unsplash.com/random/800x600?road,motorcycle';
+  const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1558981806-ec527fa84c39';
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoCaption, setPhotoCaption] = useState('');
   const [showPhotoForm, setShowPhotoForm] = useState(false);
