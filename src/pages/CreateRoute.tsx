@@ -59,7 +59,12 @@ function RoutingMachine({
         fitSelectedRoute: true,
         addWaypoints: false,
         draggableWaypoints: false,
-        show: false // Hide the text instructions
+        show: false,
+        containerClassName: 'hidden',
+        createMarker: () => null,
+        plan: false,
+        itineraryFormatter: () => '',
+        waypointNameFallback: () => ''
       }).on('routesfound', function(e: any) {
         const route = e.routes[0];
         const distanceInKm = Math.round(route.summary.totalDistance / 1000);
