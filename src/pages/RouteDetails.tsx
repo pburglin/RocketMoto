@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth';
 import { useRating } from '../lib/useRating';
 import { useBookmark } from '../lib/useBookmark';
 import { useLocation } from '../lib/location';
-import { formatDistance } from '../lib/utils';
+import { formatDistance, formatDate } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 
 type RouteData = {
@@ -21,6 +21,7 @@ type RouteData = {
   distance: number;
   duration: string;
   created_by: string;
+  created_at: string;
   upvotes: number;
   downvotes: number;
   route_photos?: {
@@ -58,6 +59,10 @@ export function RouteDetails() {
   const [isCompleted, setIsCompleted] = useState(false);
   const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
   const [completingRoute, setCompletingRoute] = useState(false);
+  const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
+  const [routeCreator, setRouteCreator] = useState<{ username: string; avatar_url: string } | null>(null);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
   const [showNewRouteAlert, setShowNewRouteAlert] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
@@ -71,6 +76,33 @@ export function RouteDetails() {
 
     async function fetchRouteAndComments() {
       if (!id) return;
+
+      // Fetch route creator details
+      if (route?.created_by) {
+        const { data: creator } = await supabase
+          .from('users')
+          .select('username, avatar_url')
+          .eq('id', route.created_by)
+          .single();
+        
+        if (creator) {
+          setRouteCreator(creator);
+        }
+      }
+
+      // Fetch bookmark and completion counts
+      const { count: bookmarks } = await supabase
+        .from('route_bookmarks')
+        .select('*', { count: 'exact' })
+        .eq('route_id', id);
+
+      const { count: completed } = await supabase
+        .from('completed_routes')
+        .select('*', { count: 'exact' })
+        .eq('route_id', id);
+
+      setBookmarkCount(bookmarks || 0);
+      setCompletedCount(completed || 0);
 
       // Check if route is completed by user
       if (user) {
@@ -135,6 +167,30 @@ export function RouteDetails() {
 
     initialize();
   }, [id]);
+
+  // Calculate distance to start point when location or route changes
+  useEffect(() => {
+    async function calculateDistance() {
+      if (!currentLocation || !route?.start_point) return;
+
+      try {
+        const { data: distance } = await supabase.rpc(
+          'calculate_route_distance_from_point',
+          {
+            route_id: route.id,
+            p_lat: currentLocation.lat,
+            p_lng: currentLocation.lng
+          }
+        );
+
+        setDistanceToStart(distance);
+      } catch (err) {
+        console.error('Error calculating distance:', err);
+      }
+    }
+
+    calculateDistance();
+  }, [currentLocation, route]);
 
   async function handleSubmitComment(e: React.FormEvent) {
     e.preventDefault();
@@ -358,7 +414,7 @@ export function RouteDetails() {
         <div className="space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Route Details</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance</h3>
                 <p className="text-lg text-gray-900 dark:text-white">{formatDistance(route.distance, distanceUnit)}</p>
@@ -366,6 +422,42 @@ export function RouteDetails() {
               <div className="text-center">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
                 <p className="text-lg text-gray-900 dark:text-white">{route.duration}</p>
+              </div>
+              {distanceToStart !== null && (
+                <div className="text-center col-span-2">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance from You</h3>
+                  <p className="text-lg text-gray-900 dark:text-white">
+                    {formatDistance(distanceToStart, distanceUnit)}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              {routeCreator && (
+                <div className="flex items-center mb-3">
+                  <img
+                    src={routeCreator.avatar_url}
+                    alt={routeCreator.username}
+                    className="w-6 h-6 rounded-full mr-2"
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Shared by <span className="font-medium">{routeCreator.username}</span>
+                  </span>
+                </div>
+              )}
+              <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                <p>
+                  Created {formatDate(route.created_at)}
+                </p>
+                <p className="flex items-center gap-2">
+                  <span>
+                    {bookmarkCount} {bookmarkCount === 1 ? 'rider has' : 'riders have'} bookmarked
+                  </span>
+                  •
+                  <span>
+                    {completedCount} {completedCount === 1 ? 'completion' : 'completions'}
+                  </span>
+                </p>
               </div>
             </div>
           </div>
