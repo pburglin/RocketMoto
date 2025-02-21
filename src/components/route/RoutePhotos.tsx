@@ -101,8 +101,7 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
-          <Image className="h-5 w-5 mr-2" />
-          {photos?.length || 0} Photos
+          {photos?.length || 0} {(photos?.length || 0) === 1 ? 'Photo' : 'Photos'}
         </h2>
         {isOwner && !showPhotoForm && (
           <button
@@ -235,11 +234,7 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
               )] : []
             )
         ) : (
-          <img
-            src={DEFAULT_PHOTO}
-            alt="Generic road photo"
-            className="rounded-lg col-span-2 w-full h-48 object-cover"
-          />
+          ``
         )}
       </div>
       <PhotoGallery
