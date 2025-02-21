@@ -50,12 +50,6 @@ export function PhotoGallery({ photos, isOpen, initialPhotoIndex, onClose }: Pho
         <X className="h-8 w-8" />
       </button>
 
-      <button
-        onClick={handlePrevious}
-        className="absolute left-4 text-white hover:text-gray-300"
-      >
-        <ChevronLeft className="h-12 w-12" />
-      </button>
 
       <div className="relative max-w-7xl mx-auto px-4">
         <img
@@ -72,6 +66,13 @@ export function PhotoGallery({ photos, isOpen, initialPhotoIndex, onClose }: Pho
           {currentIndex + 1} of {photos.length}
         </p>
       </div>
+
+      <button
+        onClick={handlePrevious}
+        className="absolute left-4 text-white hover:text-gray-300"
+      >
+        <ChevronLeft className="h-12 w-12" />
+      </button>
 
       <button
         onClick={handleNext}
