@@ -21,29 +21,20 @@ const defaultIcon = new Icon({
 
 // Custom icons for different marker types
 const startIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
-  className: 'start-marker'
 });
 
 const endIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
-  className: 'end-marker'
 });
-
-// Component to update map view when location changes
-function MapUpdater({ center }: { center: [number, number] }) {
-  const map = useMap();
-  map.setView(center, 13);
-  return null;
-}
 
 // Component to handle routing
 function RoutingMachine({ 
@@ -163,7 +154,7 @@ export function CreateRoute() {
   const defaultCenter: [number, number] = [40.7128, -74.0060];
   const mapCenter = savedLocation
     ? [savedLocation.lat, savedLocation.lng] as [number, number]
-    : defaultCenter;
+    : startLocation || defaultCenter;
 
   // Function to fit map to route bounds
   const fitMapToRoute = () => {
@@ -172,7 +163,7 @@ export function CreateRoute() {
     const bounds = L.latLngBounds([startLocation, endLocation]);
     mapRef.current.fitBounds(bounds, {
       padding: [50, 50],
-      maxZoom: 13
+      maxZoom: 12
     });
   };
 
@@ -417,7 +408,6 @@ export function CreateRoute() {
                       }
                     }}
                   />
-                  <MapUpdater center={mapCenter} />
                 </MapContainer>
               </div>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
