@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Filter, SortDesc, Search, X } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useLocation } from '../lib/location';
+import { kmToMiles, milesToKm } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { RouteCard } from '../components/RouteCard';
 import { useSearchParams } from 'react-router-dom';
 
 export function SearchResults() {
-  const { user, profile } = useAuth();
+  const { user, profile, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
   const [routes, setRoutes] = useState<any[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
@@ -30,12 +31,23 @@ export function SearchResults() {
       let query = supabase
         .from('routes')
         .select(`
-          *,
+          id,
+          title,
+          description,
+          distance,
+          duration,
+          created_by,
+          upvotes,
+          downvotes,
+          created_at,
+          start_point,
+          end_point,
           route_tags (
             tag
           ),
           route_photos (
             photo_url,
+            photo_blob,
             order
           )
         `);
@@ -47,12 +59,21 @@ export function SearchResults() {
 
       // Filter by tags
       if (selectedTags.size > 0) {
-        query = query.contains('route_tags', Array.from(selectedTags).map(tag => ({ tag })));
+        const { data: routeIds } = await supabase.rpc(
+          'get_routes_with_all_tags',
+          { tag_names: Array.from(selectedTags) }
+        );
+        
+        if (routeIds) {
+          query = query.in('id', routeIds);
+        }
       }
 
       // Filter by route distance
       if (maxRouteDistance) {
-        query = query.lte('distance', parseFloat(maxRouteDistance));
+        // Convert miles to kilometers for the database query
+        const maxRouteDistanceKm = distanceUnit === 'mi' ? milesToKm(parseFloat(maxRouteDistance)) : parseFloat(maxRouteDistance);
+        query = query.lte('distance', maxRouteDistanceKm);
       }
 
       // Filter by distance from user
@@ -60,29 +81,52 @@ export function SearchResults() {
         const [lat, lng] = profile?.location?.split(',').map(Number) || 
           [currentLocation?.lat, currentLocation?.lng];
 
+        // Convert miles to kilometers for the database query
+        const maxDistanceKm = distanceUnit === 'mi' ? milesToKm(parseFloat(maxDistance)) : parseFloat(maxDistance);
+
         if (lat && lng) {
-          query = query.select(`
-            *,
-            route_tags (tag),
-            route_photos (photo_url, order),
-            calculate_distance_km(start_point, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)) as distance_from_user
-          `)
-          .lt('distance_from_user', parseFloat(maxDistance));
+          const { data: routesWithinDistance } = await supabase.rpc(
+            'get_routes_within_distance',
+            { p_lat: lat, p_lng: lng, p_distance: maxDistanceKm }
+          );
+          
+          if (routesWithinDistance) {
+            const routeIds = routesWithinDistance.map(route => route.id);
+            query = query.in('id', routeIds);
+          }
         }
       }
 
       const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching routes:', error);
+        return;
+      }
 
-      if (!error && data) {
+      if (data) {
         // Sort results
         let sortedData = [...data];
         if (sortBy === 'distance' && (currentLocation || profile?.location)) {
           const [lat, lng] = profile?.location?.split(',').map(Number) || 
             [currentLocation?.lat, currentLocation?.lng];
           if (lat && lng) {
-            sortedData.sort((a, b) => 
-              (a.distance_from_user || Infinity) - (b.distance_from_user || Infinity)
+            // Calculate distances for sorting
+            const routesWithDistances = await Promise.all(
+              sortedData.map(async route => {
+                const { data: distance } = await supabase.rpc(
+                  'calculate_route_distance_from_point',
+                  {
+                    route_id: route.id,
+                    p_lat: lat,
+                    p_lng: lng
+                  }
+                );
+                return { ...route, distance_from_user: distance };
+              })
             );
+            sortedData = routesWithDistances.sort((a, b) => 
+              (a.distance_from_user || Infinity) - (b.distance_from_user || Infinity));
           }
         } else if (sortBy === 'routeDistance') {
           sortedData.sort((a, b) => a.distance - b.distance);
@@ -130,6 +174,7 @@ export function SearchResults() {
     setSelectedTags(new Set());
     setSortBy('relevance');
   }
+
   const hasActiveFilters = useMemo(() => {
     return searchTerm || maxDistance || maxRouteDistance || selectedTags.size > 0 || sortBy !== 'relevance';
   }, [searchTerm, maxDistance, maxRouteDistance, selectedTags, sortBy]);
@@ -177,7 +222,7 @@ export function SearchResults() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Max Distance from You (km)
+                    Max Distance from You ({distanceUnit})
                   </label>
                   <input
                     type="number"
@@ -190,7 +235,7 @@ export function SearchResults() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Max Route Distance (km)
+                    Max Route Distance ({distanceUnit})
                   </label>
                   <input
                     type="number"
