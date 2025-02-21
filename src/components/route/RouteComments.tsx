@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 type Comment = {
@@ -24,18 +24,22 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   async function handleSubmitComment(e: React.FormEvent) {
     e.preventDefault();
     if (!newComment.trim()) return;
 
     setSubmitting(true);
+    setCommentError(null);
+
     try {
       const { data: comment, error } = await supabase
         .from('route_comments')
         .insert([
           {
             route_id: routeId,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
             content: newComment.trim()
           }
         ])
@@ -53,7 +57,7 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
       onCommentAdded(comment);
       setNewComment('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to post comment');
+      setCommentError(err instanceof Error ? err.message : 'Failed to post comment');
     } finally {
       setSubmitting(false);
     }
@@ -102,7 +106,7 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
           >
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
-          {error && (
+          {commentError && (
             <p className="mt-2 text-red-600 text-sm">{error}</p>
           )}
         </form>
