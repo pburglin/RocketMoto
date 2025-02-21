@@ -43,7 +43,13 @@ function RouteVisualizer({
   React.useEffect(() => {
     // Clear all existing routes
     Object.values(routingControls.current).forEach(control => {
-      if (control) map.removeControl(control);
+      if (control && map) {
+        try {
+          map.removeControl(control);
+        } catch (err) {
+          console.warn('Error removing control:', err);
+        }
+      }
     });
     routingControls.current = {};
 
@@ -79,8 +85,6 @@ function RouteVisualizer({
         draggableWaypoints: false,
         show: false,
         containerClassName: 'hidden', // Hide the container completely
-        showAlternatives: false,
-        fitSelectedRoute: hoveredRouteId === route.id,
         createMarker: () => null,
         plan: false,
         itineraryFormatter: () => '',
@@ -116,7 +120,13 @@ function RouteVisualizer({
 
     return () => {
       Object.values(routingControls.current).forEach(control => {
-        if (control) map.removeControl(control);
+        if (control && map) {
+          try {
+            map.removeControl(control);
+          } catch (err) {
+            console.warn('Error removing control:', err);
+          }
+        }
       });
     };
   }, [routes, hoveredRouteId, map, onRouteClick]);
@@ -238,21 +248,13 @@ export function Home() {
               placeholder="Search for routes near you..."
               className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
-            <button 
+            <button
               type="submit"
               className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:text-indigo-600 dark:hover:text-indigo-400"
             >
               <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </button>
           </form>
-          <button 
-            onClick={getCurrentLocation}
-            disabled={loading}
-            className="mt-4 flex items-center justify-center mx-auto text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 disabled:opacity-50"
-          >
-            <NavigationIcon className="h-5 w-5 mr-2" />
-            {loading ? 'Getting location...' : 'Use my current location'}
-          </button>
           {error && (
             <div className="mt-2 flex items-center justify-center text-red-600">
               <AlertCircle className="h-5 w-5 mr-2" />

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import { useAuth } from './auth';
 
@@ -21,6 +21,12 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!currentLocation && !loading) {
+      getCurrentLocation();
+    }
+  }, [currentLocation, loading]);
 
   async function getCurrentLocation(): Promise<void> {
     setLoading(true);
