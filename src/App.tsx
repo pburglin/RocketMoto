@@ -10,6 +10,7 @@ import { Profile } from './pages/Profile';
 import { FAQ } from './pages/FAQ';
 import { Bookmarks } from './pages/Bookmarks';
 import { Footer } from './components/Footer';
+import { TermsOfService } from './pages/TermsOfService';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/faq" element={<FAQ />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/bookmarks" element={<Bookmarks />} />
+            <Route path="/terms" element={<TermsOfService />} />
           </Routes>
         </main>
         <Footer />

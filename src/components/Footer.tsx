@@ -44,9 +44,18 @@ export function Footer() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Legal</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              © {currentYear} RocketMoto.US. All rights reserved.
-            </p>
+            <div className="space-y-2">
+              <Link
+                to="/terms"
+                onClick={() => window.scrollTo(0, 0)}
+                className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 block"
+              >
+                Terms of Service
+              </Link>
+              <p className="text-gray-600 dark:text-gray-300">
+                © {currentYear} RocketMoto.US. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </div>
