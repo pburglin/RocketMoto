@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Recycle as Motorcycle, Map, User, Plus, Bookmark, Download } from 'lucide-react';
 import { AuthModal } from './AuthModal';
-import { AddToHomescreen } from './AddToHomescreen';
 import { useAuth } from '../lib/auth';
 
 export function Navigation() {
@@ -22,7 +21,6 @@ export function Navigation() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <AddToHomescreen />
               <Link to="/search" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <Map className="h-6 w-6" />
               </Link>

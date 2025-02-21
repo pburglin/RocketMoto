@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { HelpCircle, Github } from 'lucide-react';
+import { AddToHomescreen } from './AddToHomescreen';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -29,7 +30,7 @@ export function Footer() {
               </li>
               <li>
                 <a 
-                  href="https://github.com/pburglin/RocketMoto"
+                  href="https://github.com/yourusername/motorcycle-route-explorer"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
@@ -37,6 +38,7 @@ export function Footer() {
                   <Github className="h-5 w-5 mr-2" />
                   GitHub
                 </a>
+                <AddToHomescreen />
               </li>
             </ul>
           </div>

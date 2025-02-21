@@ -51,9 +51,10 @@ export function AddToHomescreen() {
   return (
     <button
       onClick={handleInstall}
-      className="flex items-center px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+      className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
     >
       <Download className="h-5 w-5 mr-2" />
+      Add to Homescreen
     </button>
   );
 }
