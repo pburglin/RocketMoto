@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Recycle as Motorcycle, Map, User, Plus, Bookmark } from 'lucide-react';
+import { Recycle as Motorcycle, Map, User, Plus, Bookmark, Download } from 'lucide-react';
 import { AuthModal } from './AuthModal';
+import { AddToHomescreen } from './AddToHomescreen';
 import { useAuth } from '../lib/auth';
 
 export function Navigation() {
@@ -27,6 +28,7 @@ export function Navigation() {
               <Link to="/bookmarks" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <Bookmark className="h-6 w-6" />
               </Link>
+              <AddToHomescreen />
               {user && (
                 <Link to="/create" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                   <Plus className="h-6 w-6" />
