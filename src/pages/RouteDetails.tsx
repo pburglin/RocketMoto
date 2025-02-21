@@ -328,17 +328,6 @@ export function RouteDetails() {
                   Thank you for sharing this route! Please consider sharing photos and comments with highlights of this route.
                 </p>
               </div>
-              <div className="mt-4">
-                <div className="-mx-2 -my-1.5 flex">
-                  <button
-                    type="button"
-                    onClick={() => setShowNewRouteAlert(false)}
-                    className="ml-3 rounded-md bg-green-50 dark:bg-green-900/30 px-2 py-1.5 text-sm font-medium text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>

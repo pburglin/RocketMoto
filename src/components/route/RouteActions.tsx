@@ -54,14 +54,14 @@ export function RouteActions({
             <ThumbsUp className={`h-5 w-5 mr-2 ${
               userRating === 'up' ? 'text-green-600' : 'text-gray-400'
             }`} />
-            <span className={userRating === 'up' ? 'text-green-700 dark:text-green-300' : ''}>
+            <span className={userRating === 'up' ? 'text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'}>
               {upvotes}
             </span>
           </button>
         ) : (
           <div className="flex items-center px-4 py-2 border rounded-lg border-gray-300 dark:border-gray-600">
             <ThumbsUp className="h-5 w-5 mr-2 text-gray-400" />
-            <span className="text-gray-700 dark:text-gray-300">{upvotes}</span>
+            <span className="text-gray-600 dark:text-gray-400">{upvotes}</span>
           </div>
         )}
         {isAuthenticated ? (
@@ -77,14 +77,14 @@ export function RouteActions({
             <ThumbsDown className={`h-5 w-5 mr-2 ${
               userRating === 'down' ? 'text-red-600' : 'text-gray-400'
             }`} />
-            <span className={userRating === 'down' ? 'text-red-700 dark:text-red-300' : ''}>
+            <span className={userRating === 'down' ? 'text-red-700 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'}>
               {downvotes}
             </span>
           </button>
         ) : (
           <div className="flex items-center px-4 py-2 border rounded-lg border-gray-300 dark:border-gray-600">
             <ThumbsDown className="h-5 w-5 mr-2 text-gray-400" />
-            <span className="text-gray-700 dark:text-gray-300">{downvotes}</span>
+            <span className="text-gray-600 dark:text-gray-400">{downvotes}</span>
           </div>
         )}
         {isAuthenticated ? (
@@ -94,7 +94,7 @@ export function RouteActions({
             className={`${buttonBaseClasses} border ${
               isBookmarked
                 ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300'
-                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
           >
             <Bookmark className={`h-5 w-5 mr-2 ${
@@ -105,7 +105,7 @@ export function RouteActions({
         ) : (
           <div className="flex items-center px-4 py-2 border rounded-lg border-gray-300 dark:border-gray-600">
             <Bookmark className="h-5 w-5 mr-2 text-gray-400" />
-            <span className="text-gray-700 dark:text-gray-300">Bookmark</span>
+            <span className="text-gray-600 dark:text-gray-400">Bookmark</span>
           </div>
         )}
         {!isAuthenticated && (

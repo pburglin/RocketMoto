@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet-routing-machine';
@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useGeocoding } from '../lib/useGeocoding';
 import { supabase } from '../lib/supabase';
+import 'leaflet/dist/leaflet.css';
+import { formatDistance } from '../lib/utils';
 
 const defaultIcon = new Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -15,6 +17,25 @@ const defaultIcon = new Icon({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+});
+
+// Custom icons for different marker types
+const startIcon = new Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  className: 'start-marker'
+});
+
+const endIcon = new Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  className: 'end-marker'
 });
 
 // Component to update map view when location changes
@@ -114,8 +135,10 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (latlng: [num
 
 export function CreateRoute() {
   const { user, profile } = useAuth();
+  const { distanceUnit } = useAuth();
   const { getCoordinates, loading, error } = useGeocoding();
   const navigate = useNavigate();
+  const mapRef = useRef<L.Map | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -141,6 +164,22 @@ export function CreateRoute() {
   const mapCenter = savedLocation
     ? [savedLocation.lat, savedLocation.lng] as [number, number]
     : defaultCenter;
+
+  // Function to fit map to route bounds
+  const fitMapToRoute = () => {
+    if (!mapRef.current || !startLocation || !endLocation) return;
+    
+    const bounds = L.latLngBounds([startLocation, endLocation]);
+    mapRef.current.fitBounds(bounds, {
+      padding: [50, 50],
+      maxZoom: 13
+    });
+  };
+
+  // Update map bounds when route points change
+  useEffect(() => {
+    fitMapToRoute();
+  }, [startLocation, endLocation]);
 
   async function handleMapRoute(e: React.MouseEvent) {
     e.preventDefault();
@@ -259,6 +298,10 @@ export function CreateRoute() {
     });
   }
 
+  function handleMapLoad(map: L.Map) {
+    mapRef.current = map;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
@@ -335,20 +378,21 @@ export function CreateRoute() {
               <div className="h-[400px] rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600">
                 <MapContainer
                   center={mapCenter}
-                  zoom={13}
+                  zoom={12}
                   className="h-full w-full"
+                  ref={handleMapLoad}
                 >
                   <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   />
                   {startLocation && (
-                    <Marker position={startLocation} icon={defaultIcon}>
+                    <Marker position={startLocation} icon={startIcon}>
                       <Popup>Start point</Popup>
                     </Marker>
                   )}
                   {endLocation && (
-                    <Marker position={endLocation} icon={defaultIcon}>
+                    <Marker position={endLocation} icon={endIcon}>
                       <Popup>End point</Popup>
                     </Marker>
                   )}
@@ -387,7 +431,9 @@ export function CreateRoute() {
                     <Route className="h-5 w-5 text-indigo-600 mr-2" />
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">Distance</div>
-                      <div className="font-medium text-gray-900 dark:text-white">{routeDistance} kilometers</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {routeDistance ? formatDistance(routeDistance, distanceUnit) : '-'}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center">
