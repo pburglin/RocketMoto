@@ -54,7 +54,6 @@ export function AddToHomescreen() {
       className="flex items-center px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
     >
       <Download className="h-5 w-5 mr-2" />
-      Add to Homescreen
     </button>
   );
 }

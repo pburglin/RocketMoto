@@ -22,13 +22,13 @@ export function Navigation() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <AddToHomescreen />
               <Link to="/search" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <Map className="h-6 w-6" />
               </Link>
               <Link to="/bookmarks" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                 <Bookmark className="h-6 w-6" />
               </Link>
-              <AddToHomescreen />
               {user && (
                 <Link to="/create" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                   <Plus className="h-6 w-6" />
