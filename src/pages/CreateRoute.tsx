@@ -39,8 +39,12 @@ function RoutingMachine({
 
   React.useEffect(() => {
     // Clean up previous routing if it exists
-    if (routingRef.current) {
+    if (routingRef.current && map) {
+      try {
       map.removeControl(routingRef.current);
+      } catch (err) {
+        console.warn('Error removing control:', err);
+      }
       routingRef.current = null;
     }
 
@@ -83,8 +87,12 @@ function RoutingMachine({
       routingRef.current.addTo(map);
 
       return () => {
-        if (routingRef.current) {
+        if (routingRef.current && map) {
+          try {
           map.removeControl(routingRef.current);
+          } catch (err) {
+            console.warn('Error removing control:', err);
+          }
           routingRef.current = null;
         }
       };
@@ -212,6 +220,7 @@ export function CreateRoute() {
       if (routeError) throw routeError;
       if (!route) throw new Error('Failed to create route');
 
+      // Navigate to the route details page
       // Insert tags
       if (selectedTags.size > 0) {
         const { error: tagsError } = await supabase
@@ -228,6 +237,9 @@ export function CreateRoute() {
 
       // Navigate to the route details page
       navigate(`/routes/${route.id}`);
+
+      // Store a flag in session storage to show the alert
+      sessionStorage.setItem('showNewRouteAlert', 'true');
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to create route');
     } finally {
@@ -425,28 +437,19 @@ export function CreateRoute() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Photos
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30">
-                  <Camera className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-                </button>
-              </div>
-            </div>
-
             {saveError && (
-              <div className="text-red-600 flex items-center">
-                <AlertCircle className="h-5 w-5 mr-2" />
-                <span className="text-sm">{saveError}</span>
+              <div>
+                <div className="text-red-600 flex items-center">
+                  <AlertCircle className="h-5 w-5 mr-2" />
+                  <span className="text-sm">{saveError}</span>
+                </div>
               </div>
             )}
 
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
-                onClick={(e) => {
+                onClick={() => {
                   setTitle('');
                   setDescription('');
                   setStartLocation(null);

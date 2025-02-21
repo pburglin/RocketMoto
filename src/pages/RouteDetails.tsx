@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Camera } from 'lucide-react';
 import { RouteMap } from '../components/route/RouteMap';
 import { RoutePhotos } from '../components/route/RoutePhotos';
 import { RouteComments } from '../components/route/RouteComments';
@@ -57,9 +58,17 @@ export function RouteDetails() {
   const [isCompleted, setIsCompleted] = useState(false);
   const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
   const [completingRoute, setCompletingRoute] = useState(false);
+  const [showNewRouteAlert, setShowNewRouteAlert] = useState(false);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   useEffect(() => {
+    // Check if we should show the new route alert
+    const shouldShowAlert = sessionStorage.getItem('showNewRouteAlert') === 'true';
+    if (shouldShowAlert) {
+      setShowNewRouteAlert(true);
+      sessionStorage.removeItem('showNewRouteAlert');
+    }
+
     async function fetchRouteAndComments() {
       if (!id) return;
 
@@ -249,6 +258,36 @@ export function RouteDetails() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {showNewRouteAlert && (
+        <div className="mb-6 bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-600 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Camera className="h-5 w-5 text-green-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-green-800 dark:text-green-200">
+                Route Created Successfully
+              </h3>
+              <div className="mt-2 text-sm text-green-700 dark:text-green-300">
+                <p>
+                  Thank you for sharing this route! Please consider sharing photos and comments with highlights of this route.
+                </p>
+              </div>
+              <div className="mt-4">
+                <div className="-mx-2 -my-1.5 flex">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewRouteAlert(false)}
+                    className="ml-3 rounded-md bg-green-50 dark:bg-green-900/30 px-2 py-1.5 text-sm font-medium text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-800/50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 focus:ring-offset-green-50"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
