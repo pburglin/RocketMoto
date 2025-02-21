@@ -57,6 +57,7 @@ export function RouteDetails() {
   const [isCompleted, setIsCompleted] = useState(false);
   const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
   const [completingRoute, setCompletingRoute] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   useEffect(() => {
     async function fetchRouteAndComments() {
@@ -262,7 +263,25 @@ export function RouteDetails() {
                 </span>
               ))}
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{route.description}</p>
+            <div className="text-gray-600 dark:text-gray-300 mb-6">
+              {route.description.length > 255 ? (
+                <>
+                  <p>
+                    {isDescriptionExpanded
+                      ? route.description
+                      : `${route.description.slice(0, 255)}...`}
+                  </p>
+                  <button
+                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium mt-2"
+                  >
+                    {isDescriptionExpanded ? 'Show less' : 'Read more'}
+                  </button>
+                </>
+              ) : (
+                <p>{route.description}</p>
+              )}
+            </div>
             <RouteActions
               isAuthenticated={!!user}
               userRating={userRating}
