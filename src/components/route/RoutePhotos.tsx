@@ -99,21 +99,24 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
-        <Image className="h-5 w-5 mr-2" />
-        {photos?.length || 0} Photos
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+          <Image className="h-5 w-5 mr-2" />
+          {photos?.length || 0} Photos
+        </h2>
+        {isOwner && !showPhotoForm && (
+          <button
+            onClick={() => setShowPhotoForm(true)}
+            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Photo
+          </button>
+        )}
+      </div>
       {isOwner && (
         <div className="mb-4">
-          {!showPhotoForm ? (
-            <button
-              onClick={() => setShowPhotoForm(true)}
-              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Add Photo
-            </button>
-          ) : (
+          {showPhotoForm && (
             <form onSubmit={handlePhotoSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
