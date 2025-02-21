@@ -77,31 +77,19 @@ export function RouteDetails() {
     async function fetchRouteAndComments() {
       if (!id) return;
 
-      // Fetch route creator details
-      if (route?.created_by) {
-        const { data: creator } = await supabase
-          .from('users')
-          .select('username, avatar_url')
-          .eq('id', route.created_by)
-          .single();
-        
-        if (creator) {
-          setRouteCreator(creator);
-        }
-      }
-
       // Fetch bookmark and completion counts
       const { count: bookmarks } = await supabase
         .from('route_bookmarks')
         .select('*', { count: 'exact' })
         .eq('route_id', id);
 
+      setBookmarkCount(bookmarks || 0);
+
       const { count: completed } = await supabase
         .from('completed_routes')
         .select('*', { count: 'exact' })
         .eq('route_id', id);
 
-      setBookmarkCount(bookmarks || 0);
       setCompletedCount(completed || 0);
 
       // Check if route is completed by user
@@ -138,6 +126,17 @@ export function RouteDetails() {
 
         if (routeError) throw routeError;
         setRoute(routeData);
+
+        // Fetch route creator details
+        const { data: creator } = await supabase
+          .from('users')
+          .select('username, avatar_url')
+          .eq('id', routeData.created_by)
+          .single();
+        
+        if (creator) {
+          setRouteCreator(creator);
+        }
 
         // Fetch comments with user details
         const { data: commentsData, error: commentsError } = await supabase
