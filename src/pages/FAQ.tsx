@@ -4,11 +4,24 @@ import { Navigation as NavigationIcon, Map, Search, ThumbsUp, Camera, Tag, Alert
 export function FAQ() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-600 rounded-lg p-4 mb-8">
+        <div className="flex items-start">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 mr-3" />
+          <div>
+            <h3 className="text-sm font-medium text-red-800 dark:text-red-300">Safety First</h3>
+            <p className="mt-2 text-sm text-red-700 dark:text-red-200">
+              Always prioritize road safety over navigation. Never operate your phone while riding.
+              Use proper motorcycle communication equipment and keep your eyes on the road at all times.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-600 rounded-lg p-4 mb-8">
         <div className="flex items-start">
           <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3" />
           <div>
-            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Location Access Required</h3>
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">Location Access Recommended</h3>
             <p className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
               This app requires location access to provide the best experience. Without location permissions:
               <ul className="mt-2 list-disc list-inside">
@@ -19,7 +32,7 @@ export function FAQ() {
               </ul>
             </p>
             <p className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
-              Please enable location access in your browser settings to use all features.
+              You are not required to, but if you want any of these features please enable location access in your browser settings.
             </p>
           </div>
         </div>
@@ -80,9 +93,18 @@ export function FAQ() {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">How do I navigate a route?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     1. Open the route details page<br />
-                    2. Click either "Navigate to Start" or "Navigate to End"<br />
-                    3. The app will open Google Maps with turn-by-turn directions<br />
-                    4. Your current location will be used as the starting point
+                    2. Before starting:<br />
+                    &nbsp;&nbsp;&nbsp;• Ensure your helmet has Bluetooth speakers or a proper communication system<br />
+                    &nbsp;&nbsp;&nbsp;• Set up audio navigation before riding<br />
+                    &nbsp;&nbsp;&nbsp;• Review the route overview and key turns<br />
+                    3. Click either "Navigate to Start Point" or "Navigate to End Point"<br />
+                    4. The app will open Google Maps with turn-by-turn directions<br />
+                    5. Your current location will be used as the starting point<br />
+                    6. Safety tips:<br />
+                    &nbsp;&nbsp;&nbsp;• Never look at your phone while riding<br />
+                    &nbsp;&nbsp;&nbsp;• Listen to audio directions through your helmet<br />
+                    &nbsp;&nbsp;&nbsp;• Pull over safely if you need to check the route<br />
+                    &nbsp;&nbsp;&nbsp;• Always prioritize road safety over following directions
                   </p>
                 </div>
               </div>
@@ -95,13 +117,24 @@ export function FAQ() {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">How can I rate and review routes?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     After creating an account, you can:
+                    <br /><br />
+                    <strong>Important Privacy Note:</strong> To protect your privacy, never include personal information in:
                   </p>
                   <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>• Your username or profile</li>
+                    <li>• Comments or reviews</li>
+                    <li>• Route descriptions</li>
+                    <li>• Photo captions</li>
+                    <br />
+                    You can then:
                     <li>• Give routes a thumbs up or down</li>
                     <li>• Leave detailed comments about your experience</li>
                     <li>• Share tips about road conditions or points of interest</li>
                     <li>• Help other riders by rating accuracy and enjoyment</li>
                   </ul>
+                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    Keep your content focused on the riding experience and avoid sharing any personally identifiable information.
+                  </p>
                 </div>
               </div>
             </div>
@@ -127,6 +160,10 @@ export function FAQ() {
                     4. Add a title, description, and tags<br />
                     5. The route will automatically calculate distance and duration
                   </p>
+                  <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <strong>Privacy Tip:</strong> When creating routes, avoid using personal information in titles or descriptions.
+                    Focus on describing the route characteristics, road conditions, and points of interest.
+                  </div>
                 </div>
               </div>
             </div>
