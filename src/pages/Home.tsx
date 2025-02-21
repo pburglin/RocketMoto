@@ -17,41 +17,65 @@ export function Home() {
 
   useEffect(() => {
     async function fetchRoutes() {
-      if (!currentLocation) return;
+      const userLat = currentLocation?.lat || parseFloat(profile?.location?.split(',')[0] || '40.7128');
+      const userLng = currentLocation?.lng || parseFloat(profile?.location?.split(',')[1] || '-74.0060');
+      const maxDistance = 100; // 100km radius
 
-      // Fetch popular routes
-      const { data: popularData } = await supabase.from('routes')
-        .select(`
-          *,
-          route_tags (tag),
-          route_photos (photo_url, order)
-        `)
-        .order('upvotes', { ascending: false })
-        .limit(3);
+      try {
+        // First get routes within distance
+        const { data: nearbyRouteIds, error: distanceError } = await supabase
+          .rpc('get_routes_within_distance', {
+          p_lat: userLat,
+          p_lng: userLng,
+          p_distance: maxDistance
+          });
 
-      if (popularData) {
-        setPopularRoutes(popularData);
+        if (distanceError) {
+          console.error('Error fetching nearby routes:', distanceError);
+          return;
+        }
+
+        if (nearbyRouteIds && nearbyRouteIds.length > 0) {
+          // Then fetch full route details for these IDs
+          const { data: routeDetails, error: routesError } = await supabase
+            .from('routes')
+            .select(`
+              *,
+              route_tags (tag),
+              route_photos (photo_url, order)
+            `)
+            .in('id', nearbyRouteIds.map(r => r.id));
+
+          if (routesError) {
+            console.error('Error fetching route details:', routesError);
+            return;
+          }
+
+          if (routeDetails) {
+            // Sort by upvotes for popular routes
+            const sortedByPopularity = [...routeDetails].sort((a, b) => 
+              (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)
+            );
+            setPopularRoutes(sortedByPopularity.slice(0, 3));
+
+            // Sort by creation date for new routes
+            const sortedByDate = [...routeDetails].sort((a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            setNewRoutes(sortedByDate.slice(0, 3));
+          }
+        } else {
+          setPopularRoutes([]);
+          setNewRoutes([]);
+        }
+      } catch (err) {
+        console.error('Error fetching routes:', err);
       }
-
-      // Fetch newest routes
-      const { data: newData } = await supabase.from('routes')
-        .select(`
-          *,
-          route_tags (tag),
-          route_photos (photo_url, order)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (newData) {
-        setNewRoutes(newData);
-      }
-
       setLoadingRoutes(false);
     }
 
     fetchRoutes();
-  }, [currentLocation]);
+  }, [currentLocation, profile?.location]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
