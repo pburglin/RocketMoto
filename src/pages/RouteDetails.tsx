@@ -285,6 +285,7 @@ export function RouteDetails() {
           <RouteMap
             startPoint={startPoint}
             endPoint={endPoint}
+            currentLocation={currentLocation ? [currentLocation.lat, currentLocation.lng] : null}
             onMapInstance={setMapInstance}
           />
 

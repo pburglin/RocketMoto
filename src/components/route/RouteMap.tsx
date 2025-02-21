@@ -3,9 +3,26 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet-routing-machine';
 
-const defaultIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+// Custom icons for different marker types
+const startIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+const endIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+const locationIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -104,10 +121,11 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
 type RouteMapProps = {
   startPoint: [number, number];
   endPoint: [number, number];
+  currentLocation?: [number, number] | null;
   onMapInstance: (map: L.Map) => void;
 };
 
-export function RouteMap({ startPoint, endPoint, onMapInstance }: RouteMapProps) {
+export function RouteMap({ startPoint, endPoint, currentLocation, onMapInstance }: RouteMapProps) {
   const [mapLoaded, setMapLoaded] = React.useState(false);
 
   function handleMapLoad(map: L.Map) {
@@ -132,12 +150,17 @@ export function RouteMap({ startPoint, endPoint, onMapInstance }: RouteMapProps)
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        <Marker position={startPoint} icon={defaultIcon}>
+        <Marker position={startPoint} icon={startIcon}>
           <Popup>Route start point</Popup>
         </Marker>
-        <Marker position={endPoint} icon={defaultIcon}>
+        <Marker position={endPoint} icon={endIcon}>
           <Popup>Route end point</Popup>
         </Marker>
+        {currentLocation && (
+          <Marker position={currentLocation} icon={locationIcon}>
+            <Popup>Your current location</Popup>
+          </Marker>
+        )}
         {mapLoaded && <RoutingMachine start={startPoint} end={endPoint} />}
       </MapContainer>
     </div>
