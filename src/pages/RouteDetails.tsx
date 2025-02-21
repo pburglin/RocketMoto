@@ -298,14 +298,14 @@ export function RouteDetails() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Route Details</h2>
-            <div className="space-y-4">
-              <div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance</h3>
                 <p className="text-lg text-gray-900 dark:text-white">{formatDistance(route.distance, distanceUnit)}</p>
               </div>
-              <div>
+              <div className="text-center">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
                 <p className="text-lg text-gray-900 dark:text-white">{route.duration}</p>
               </div>
