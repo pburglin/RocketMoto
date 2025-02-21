@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Plus, Camera } from 'lucide-react';
+import { Plus, Camera, Image } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { PhotoGallery } from './PhotoGallery';
 
 type RoutePhoto = {
   id: string;
@@ -26,6 +27,8 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
   const [photoCaption, setPhotoCaption] = useState('');
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   async function handlePhotoSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,7 +99,10 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Photos</h2>
+      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white flex items-center">
+        <Image className="h-5 w-5 mr-2" />
+        {photos?.length || 0} Photos
+      </h2>
       {isOwner && (
         <div className="mb-4">
           {!showPhotoForm ? (
@@ -178,19 +184,27 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
           )}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-hidden">
         {photos?.length ? (
           photos
             .sort((a, b) => a.order - b.order)
-            .map((photo) => (
-              <div key={photo.id} className="relative">
+            .slice(0, 4)
+            .map((photo, index) => (
+              <div
+                key={photo.id}
+                className="relative cursor-pointer"
+                onClick={() => {
+                  setSelectedPhotoIndex(index);
+                  setGalleryOpen(true);
+                }}
+              >
                 <img
                   src={
                     photo.photo_url || 
                     (photo.photo_blob ? photo.photo_blob : DEFAULT_PHOTO)
                   }
                   alt={photo.caption || 'Route photo'}
-                  className="rounded-lg w-full aspect-[4/3] object-cover bg-gray-100 dark:bg-gray-700"
+                  className="rounded-lg w-full h-48 object-cover bg-gray-100 dark:bg-gray-700"
                   onError={(e) => {
                     e.currentTarget.src = DEFAULT_PHOTO;
                   }}
@@ -201,15 +215,36 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
                   </p>
                 )}
               </div>
-            ))
+            )).concat(
+              photos.length > 4 ? [(
+                <div
+                  key="more-photos"
+                  className="relative cursor-pointer bg-black bg-opacity-75 flex items-center justify-center h-48 rounded-lg"
+                  onClick={() => {
+                    setSelectedPhotoIndex(4);
+                    setGalleryOpen(true);
+                  }}
+                >
+                  <span className="text-white text-xl font-semibold">
+                    +{photos.length - 4} more
+                  </span>
+                </div>
+              )] : []
+            )
         ) : (
           <img
             src={DEFAULT_PHOTO}
             alt="Generic road photo"
-            className="rounded-lg col-span-2 w-full aspect-[4/3] object-cover"
+            className="rounded-lg col-span-2 w-full h-48 object-cover"
           />
         )}
       </div>
+      <PhotoGallery
+        photos={photos || []}
+        isOpen={galleryOpen}
+        initialPhotoIndex={selectedPhotoIndex}
+        onClose={() => setGalleryOpen(false)}
+      />
     </div>
   );
 }
