@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import 'leaflet-routing-machine';
+import { useEffect, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
 
 // Custom icons for different marker types
 const startIcon = new Icon({
@@ -32,26 +34,36 @@ const locationIcon = new Icon({
 function RoutingMachine({ start, end }: { start: [number, number]; end: [number, number] }) {
   const map = useMap();
   const routingControl = React.useRef<any>(null);
-  const routeLayer = React.useRef<any>(null);
-  const [routeFound, setRouteFound] = React.useState(false);
+  const routeLayerRef = React.useRef<any>(null);
+  const [routeFound, setRouteFound] = useState(false);
 
   // Fit map to route bounds when route is found
   function handleRouteFound(e: any) {
     if (!map) return;
 
-    const route = e.routes[0];
-    if (route) {
-      const bounds = L.latLngBounds(route.coordinates);
-      map.fitBounds(bounds, { padding: [50, 50] });
-      setRouteFound(true);
-
-      // Store the route layer for cleanup
-      if (e.routes[0].coordinates && map) {
-        routeLayer.current = L.polyline(e.routes[0].coordinates, {
-          color: '#6366f1',
-          weight: 4
-        }).addTo(map);
+    if (e.routes && e.routes[0]) {
+      const route = e.routes[0];
+      const bounds = L.latLngBounds(route.coordinates || []);
+      
+      // Only fit bounds if they're valid
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { 
+          padding: [50, 50],
+          maxZoom: 15 // Prevent zooming in too close
+        });
       }
+
+      // Add the route layer
+      if (routeLayerRef.current) {
+        map.removeLayer(routeLayerRef.current);
+      }
+      routeLayerRef.current = L.polyline(route.coordinates, {
+        color: '#6366f1',
+        weight: 4,
+        opacity: 0.8
+      }).addTo(map);
+
+      setRouteFound(true);
     }
   }
 
@@ -60,7 +72,7 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
     setRouteFound(false);
   }, [start, end]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!map) return;
 
     function cleanup() {
@@ -73,18 +85,19 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
         routingControl.current = null;
       }
       
-      if (routeLayer.current && map) {
+      if (routeLayerRef.current && map) {
         try {
-          map.removeLayer(routeLayer.current);
+          map.removeLayer(routeLayerRef.current);
         } catch (err) {
           console.warn('Error removing route layer:', err);
         }
-        routeLayer.current = null;
+        routeLayerRef.current = null;
       }
     }
 
     // Clean up existing controls and layers
     cleanup();
+    setRouteFound(false);
 
     if (!start || !end) return;
 
@@ -107,10 +120,10 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
       plan: false,
       itineraryFormatter: () => '',
       waypointNameFallback: () => '',
-      addWaypoints: false,
       fitSelectedRoute: true
-    })
-    .on('routesfound', handleRouteFound).addTo(map);
+    }).on('routesfound', handleRouteFound);
+
+    routingControl.current.addTo(map);
 
     return cleanup;
   }, [start, end, map]);
@@ -143,7 +156,7 @@ export function RouteMap({ startPoint, endPoint, currentLocation, onMapInstance 
       <MapContainer
         center={startPoint}
         zoom={13}
-        className="h-full w-full"
+        className="h-full w-full z-0"
         ref={handleMapLoad}
       >
         <TileLayer
