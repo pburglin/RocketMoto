@@ -28,8 +28,20 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const COMMENTS_PER_PAGE = 5;
+  const [totalComments, setTotalComments] = useState(0);
 
   useEffect(() => {
+    // Get total comment count
+    async function getTotalComments() {
+      const { count } = await supabase
+        .from('route_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('route_id', routeId);
+      
+      setTotalComments(count || 0);
+    }
+
+    getTotalComments();
     loadComments();
   }, [routeId]);
 
@@ -95,6 +107,7 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
       if (error) throw error;
       
       setComments(prev => [comment, ...prev]);
+      setTotalComments(prev => prev + 1);
       onCommentAdded(comment);
       setNewComment('');
     } catch (err) {
@@ -106,9 +119,12 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-white">
+      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
         <MessageSquare className="h-5 w-5 mr-2" />
-        Comments
+        <span className="text-gray-900 dark:text-white font-normal">
+          {totalComments}
+        </span>
+        {totalComments === 1 ? 'Comment' : 'Comments'}
       </h2>
       <div className="space-y-4">
         {comments.map((comment) => (
