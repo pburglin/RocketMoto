@@ -5,14 +5,28 @@ import { RouteCard } from '../components/RouteCard';
 import { Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const BOOKMARKS_PER_PAGE = 9;
+
 export function Bookmarks() {
   const { user } = useAuth();
   const [bookmarkedRoutes, setBookmarkedRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    async function fetchBookmarks() {
+    fetchBookmarks();
+  }, [user]);
+
+  async function fetchBookmarks(startIndex = 0) {
       if (!user) return;
+
+      const isInitialLoad = startIndex === 0;
+      if (isInitialLoad) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
 
       const { data, error } = await supabase
         .from('route_bookmarks')
@@ -25,16 +39,25 @@ export function Bookmarks() {
           )
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(startIndex, startIndex + BOOKMARKS_PER_PAGE - 1);
 
       if (!error && data) {
-        setBookmarkedRoutes(data.map(b => b.route));
+        const routes = data.map(b => b.route);
+        setBookmarkedRoutes(prev => isInitialLoad ? routes : [...prev, ...routes]);
+        setHasMore(data.length === BOOKMARKS_PER_PAGE);
       }
-      setLoading(false);
+      if (isInitialLoad) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
     }
 
-    fetchBookmarks();
-  }, [user]);
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    await fetchBookmarks(bookmarkedRoutes.length);
+  }
 
   if (!user) {
     return (
@@ -59,11 +82,24 @@ export function Bookmarks() {
           Loading bookmarks...
         </div>
       ) : bookmarkedRoutes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bookmarkedRoutes.map((route) => (
-            <RouteCard key={route.id} route={route} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bookmarkedRoutes.map((route) => (
+              <RouteCard key={route.id} route={route} />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="mt-8 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
+              >
+                {loadingMore ? 'Loading...' : 'Load More Bookmarks'}
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-8">
           <p className="text-gray-500 dark:text-gray-400 mb-4">
