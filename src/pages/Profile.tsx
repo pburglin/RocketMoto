@@ -7,6 +7,7 @@ import { RouteCard } from '../components/RouteCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 
 const ROUTES_PER_PAGE = 6;
+const HISTORY_PER_PAGE = 5;
 
 export function Profile() {
   const { user, profile, signOut } = useAuth();
@@ -14,6 +15,8 @@ export function Profile() {
   const [routes, setRoutes] = useState<any[]>([]);
   const [loadingMoreRoutes, setLoadingMoreRoutes] = useState(false);
   const [hasMoreRoutes, setHasMoreRoutes] = useState(true);
+  const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [ratings, setRatings] = useState<number>(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
@@ -107,10 +110,12 @@ export function Profile() {
           )
         `)
         .eq('user_id', user.id)
-        .order('completed_at', { ascending: false });
+        .order('completed_at', { ascending: false })
+        .range(0, HISTORY_PER_PAGE - 1);
 
       if (completed) {
         setCompletedRoutes(completed);
+        setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
       }
 
       // Fetch user's routes
@@ -182,6 +187,43 @@ export function Profile() {
       console.error('Error loading more routes:', err);
     } finally {
       setLoadingMoreRoutes(false);
+    }
+  }
+
+  async function loadMoreHistory() {
+    if (!user || loadingMoreHistory) return;
+
+    setLoadingMoreHistory(true);
+    try {
+      const { data: newHistory, error } = await supabase
+        .from('completed_routes')
+        .select(`
+          id,
+          completed_at,
+          route:routes (
+            id,
+            title,
+            description,
+            distance,
+            duration,
+            route_tags (tag),
+            route_photos (photo_url, order)
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false })
+        .range(completedRoutes.length, completedRoutes.length + HISTORY_PER_PAGE - 1);
+
+      if (error) throw error;
+
+      if (newHistory) {
+        setCompletedRoutes(prev => [...prev, ...newHistory]);
+        setHasMoreHistory(newHistory.length === HISTORY_PER_PAGE);
+      }
+    } catch (err) {
+      console.error('Error loading more history:', err);
+    } finally {
+      setLoadingMoreHistory(false);
     }
   }
 
@@ -314,36 +356,51 @@ export function Profile() {
             <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
             Route History
           </h2>
-          {completedRoutes.length > 0 ? (
-            <div className="space-y-4">
-              {completedRoutes.map((completed) => (
-                <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <div className="flex-1">
-                    <Link
-                      to={`/routes/${completed.route.id}`}
-                      className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
-                    >
-                      {completed.route.title}
-                    </Link>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Completed on {new Date(completed.completed_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveCompleted(completed.id)}
-                    disabled={deletingRoute === completed.id}
-                    className="ml-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+          <div>
+            {completedRoutes.length > 0 ? (
+              <>
+                <div className="space-y-4">
+                  {completedRoutes.map((completed) => (
+                    <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
+                      <div className="flex-1">
+                        <Link
+                          to={`/routes/${completed.route.id}`}
+                          className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
+                        >
+                          {completed.route.title}
+                        </Link>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Completed on {new Date(completed.completed_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveCompleted(completed.id)}
+                        disabled={deletingRoute === completed.id}
+                        className="ml-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              You haven't completed any routes yet
-            </p>
-          )}
+                {hasMoreHistory && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={loadMoreHistory}
+                      disabled={loadingMoreHistory}
+                      className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
+                    >
+                      {loadingMoreHistory ? 'Loading...' : 'Load More History'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                You haven't completed any routes yet
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="lg:col-span-3">
