@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -15,16 +15,56 @@ type Comment = {
 
 type RouteCommentsProps = {
   routeId: string;
-  comments: Comment[];
   isAuthenticated: boolean;
   onCommentAdded: (comment: Comment) => void;
 };
 
-export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdded }: RouteCommentsProps) {
+export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: RouteCommentsProps) {
   const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<Comment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const COMMENTS_PER_PAGE = 5;
+
+  useEffect(() => {
+    loadComments();
+  }, [routeId]);
+
+  async function loadComments(startIndex = 0) {
+    setLoading(true);
+    try {
+      const { data: newComments, error } = await supabase
+        .from('route_comments')
+        .select(`
+          *,
+          user:users (
+            username,
+            avatar_url
+          )
+        `)
+        .eq('route_id', routeId)
+        .order('created_at', { ascending: false })
+        .range(startIndex, startIndex + COMMENTS_PER_PAGE - 1);
+
+      if (error) throw error;
+
+      if (newComments) {
+        setComments(prev => startIndex === 0 ? newComments : [...prev, ...newComments]);
+        setHasMore(newComments.length === COMMENTS_PER_PAGE);
+      }
+    } catch (err) {
+      console.error('Error loading comments:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleLoadMore() {
+    loadComments(comments.length);
+  }
 
   async function handleSubmitComment(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +93,8 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
         .single();
 
       if (error) throw error;
-
+      
+      setComments(prev => [comment, ...prev]);
       onCommentAdded(comment);
       setNewComment('');
     } catch (err) {
@@ -71,7 +112,7 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
       </h2>
       <div className="space-y-4">
         {comments.map((comment) => (
-          <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-4">
+          <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
             <div className="flex items-center mb-2">
               <img
                 src={comment.user.avatar_url}
@@ -88,6 +129,23 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
             <p className="text-gray-600 dark:text-gray-300">{comment.content}</p>
           </div>
         ))}
+        
+        {loading && (
+          <div className="text-center py-4">
+            <div className="text-gray-500 dark:text-gray-400">Loading comments...</div>
+          </div>
+        )}
+        
+        {!loading && hasMore && (
+          <div className="text-center pt-4">
+            <button
+              onClick={handleLoadMore}
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
+            >
+              Load More Comments
+            </button>
+          </div>
+        )}
       </div>
       {isAuthenticated ? (
         <form onSubmit={handleSubmitComment} className="mt-6">
@@ -107,7 +165,7 @@ export function RouteComments({ routeId, comments, isAuthenticated, onCommentAdd
             {submitting ? 'Posting...' : 'Post Comment'}
           </button>
           {commentError && (
-            <p className="mt-2 text-red-600 text-sm">{error}</p>
+            <p className="mt-2 text-red-600 text-sm">{commentError}</p>
           )}
         </form>
       ) : (

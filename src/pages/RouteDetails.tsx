@@ -393,7 +393,6 @@ export function RouteDetails() {
 
           <RouteComments
             routeId={route.id}
-            comments={comments}
             isAuthenticated={!!user}
             onCommentAdded={(comment) => setComments([comment, ...comments])}
           />
