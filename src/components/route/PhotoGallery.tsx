@@ -16,12 +16,8 @@ type PhotoGalleryProps = {
 };
 
 export function PhotoGallery({ photos, isOpen, initialPhotoIndex, onClose }: PhotoGalleryProps) {
-  if (!isOpen) return null;
-
   const [currentIndex, setCurrentIndex] = useState(initialPhotoIndex);
-  const currentPhoto = photos[currentIndex];
-  const photoUrl = currentPhoto.photo_url || currentPhoto.photo_blob;
-
+  
   const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
   }, [photos.length]);
@@ -41,8 +37,13 @@ export function PhotoGallery({ photos, isOpen, initialPhotoIndex, onClose }: Pho
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  if (!isOpen) return null;
+
+  const currentPhoto = photos[currentIndex];
+  const photoUrl = currentPhoto.photo_url ?? currentPhoto.photo_blob ?? '';
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black bg-opacity-90 z-[2000] flex items-center justify-center">
       <button
         onClick={onClose}
         className="absolute top-4 right-4 text-white hover:text-gray-300"
