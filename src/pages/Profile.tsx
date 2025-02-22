@@ -6,10 +6,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { RouteCard } from '../components/RouteCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 
+const ROUTES_PER_PAGE = 6;
+
 export function Profile() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [routes, setRoutes] = useState<any[]>([]);
+  const [loadingMoreRoutes, setLoadingMoreRoutes] = useState(false);
+  const [hasMoreRoutes, setHasMoreRoutes] = useState(true);
   const [ratings, setRatings] = useState<number>(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
@@ -110,7 +114,7 @@ export function Profile() {
       }
 
       // Fetch user's routes
-      const { data: userRoutes } = await supabase
+      const { data: userRoutes, error: routesError } = await supabase
         .from('routes')
         .select(`
           *,
@@ -122,10 +126,15 @@ export function Profile() {
             order
           )
         `)
-        .eq('created_by', user.id);
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false })
+        .range(0, ROUTES_PER_PAGE - 1);
 
-      if (userRoutes) {
+      if (routesError) {
+        console.error('Error fetching routes:', routesError);
+      } else if (userRoutes) {
         setRoutes(userRoutes);
+        setHasMoreRoutes(userRoutes.length === ROUTES_PER_PAGE);
       }
 
       // Fetch user's ratings count
@@ -141,6 +150,40 @@ export function Profile() {
 
     fetchUserData();
   }, [user, navigate]);
+
+  async function loadMoreRoutes() {
+    if (!user || loadingMoreRoutes) return;
+
+    setLoadingMoreRoutes(true);
+    try {
+      const { data: newRoutes, error } = await supabase
+        .from('routes')
+        .select(`
+          *,
+          route_tags (
+            tag
+          ),
+          route_photos (
+            photo_url,
+            order
+          )
+        `)
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false })
+        .range(routes.length, routes.length + ROUTES_PER_PAGE - 1);
+
+      if (error) throw error;
+
+      if (newRoutes) {
+        setRoutes(prev => [...prev, ...newRoutes]);
+        setHasMoreRoutes(newRoutes.length === ROUTES_PER_PAGE);
+      }
+    } catch (err) {
+      console.error('Error loading more routes:', err);
+    } finally {
+      setLoadingMoreRoutes(false);
+    }
+  }
 
   async function handleRemoveCompleted(completedRouteId: string) {
     if (!user) return;
@@ -306,17 +349,30 @@ export function Profile() {
         <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">My Routes</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {routes.length > 0 ? (
-                routes.map((route) => (
-                  <RouteCard key={route.id} route={route} showEdit />
-                ))
-              ) : (
-                <div className="col-span-2 text-center py-8 text-gray-500 dark:text-gray-400">
-                  You haven't created any routes yet
+            {routes.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {routes.map((route) => (
+                    <RouteCard key={route.id} route={route} showEdit />
+                  ))}
                 </div>
-              )}
-            </div>
+                {hasMoreRoutes && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={loadMoreRoutes}
+                      disabled={loadingMoreRoutes}
+                      className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
+                    >
+                      {loadingMoreRoutes ? 'Loading...' : 'Load More Routes'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                You haven't created any routes yet
+              </div>
+            )}
           </div>
         </div>
       </div>
