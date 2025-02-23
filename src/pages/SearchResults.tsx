@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Filter, SortDesc, Search, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useLocation } from '../lib/location';
-import { kmToMiles, milesToKm } from '../lib/utils';
+import { milesToKm } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 import { RouteCard } from '../components/RouteCard';
 import { useSearchParams } from 'react-router-dom';
@@ -10,24 +10,22 @@ import { useSearchParams } from 'react-router-dom';
 const ROUTES_PER_PAGE = 9;
 
 export function SearchResults() {
-  const { user, profile, distanceUnit } = useAuth();
+  const { profile, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
   const [routes, setRoutes] = useState<any[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const setSearchParams = useSearchParams()[1];
   const [showFilters, setShowFilters] = useState(false);
 
   // Search and filter state
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
-  const [maxDistance, setMaxDistance] = useState(searchParams.get('maxDistance') || '');
-  const [maxRouteDistance, setMaxRouteDistance] = useState(searchParams.get('maxRouteDistance') || '');
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(
-    new Set(searchParams.getAll('tags'))
-  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [maxDistance, setMaxDistance] = useState('100');
+  const [maxRouteDistance, setMaxRouteDistance] = useState('');
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity'>(
-    (searchParams.get('sort') as any) || 'relevance'
+    'distance'
   );
 
   useEffect(() => {
@@ -95,7 +93,7 @@ export function SearchResults() {
           );
           
           if (routesWithinDistance) {
-            const routeIds = routesWithinDistance.map(route => route.id);
+            const routeIds = routesWithinDistance.map((route: any) => route.id);
             query = query.in('id', routeIds);
           }
         }
