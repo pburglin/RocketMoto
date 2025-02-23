@@ -85,17 +85,19 @@ RETURNS TABLE (
   username text,
   avatar_url text,
   location text,
-  routes_count bigint
+  routes_count bigint,
+  created_at timestamptz
 ) LANGUAGE sql SECURITY DEFINER AS $$
-  SELECT 
+  SELECT
     users.id,
     users.username,
     users.avatar_url,
     get_city_country_from_location(users.location) as location,
-    COUNT(routes.id) as routes_count
+    COUNT(routes.id) as routes_count,
+    users.created_at::timestamptz
   FROM users
   LEFT JOIN routes ON users.id = routes.created_by
-  GROUP BY users.id, users.username, users.avatar_url, users.location
+  GROUP BY users.id, users.username, users.avatar_url, users.location, users.created_at
   ORDER BY routes_count DESC
   LIMIT limit_count;
 $$;

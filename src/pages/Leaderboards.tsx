@@ -14,6 +14,7 @@ interface TopAuthor {
   avatar_url: string | null;
   location: string | null;
   routes_count: number;
+  created_at: string;
 }
 
 export function Leaderboards() {
@@ -37,6 +38,7 @@ export function Leaderboards() {
         if (authorsError) throw authorsError;
 
         setTopRoutes(routesData || []);
+        console.log('Authors data:', authorsData);
         setTopAuthors(authorsData || []);
       } catch (error) {
         console.error('Error fetching leaderboards:', error);
@@ -101,16 +103,23 @@ export function Leaderboards() {
                       />
                     )}
                     <div>
-                      <Link
-                        to={`/profile/${author.id}`}
-                        className="text-lg font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
-                      >
+                      <span className="text-lg font-medium text-gray-900 dark:text-white">
                         {author.username}
-                      </Link>
+                      </span>
                       <p className="text-gray-600 dark:text-gray-300">
                         {author.routes_count} {author.routes_count === 1 ? 'route' : 'routes'} shared
                         {author.location && ` • ${author.location}`}
                       </p>
+                      {author.created_at && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Member since {new Intl.DateTimeFormat('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            timeZone: 'UTC'
+                          }).format(new Date(author.created_at))}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </li>
