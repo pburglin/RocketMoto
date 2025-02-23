@@ -9,6 +9,7 @@ type RoutePhoto = {
   photo_blob: string | null;
   caption: string;
   order: number;
+  created_at: string;
 };
 
 type RoutePhotosProps = {
@@ -189,35 +190,39 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
       <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-hidden">
         {photos?.length ? (
           photos
-            .sort((a, b) => a.order - b.order)
+            .sort((a, b) => {
+              const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+              const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+              console.log('created_at:', a.created_at, b.created_at);
+              return dateB.getTime() - dateA.getTime();
+            })
             .slice(0, 4)
-            .map((photo, index) => (
-              <div
-                key={photo.id}
-                className="relative cursor-pointer"
-                onClick={() => {
+            .map((photo, index) => {
+              console.log('created_at:', photo.created_at);
+              return (
+                <div key={photo.id} className="relative cursor-pointer" onClick={() => {
                   setSelectedPhotoIndex(index);
                   setGalleryOpen(true);
-                }}
-              >
-                <img
-                  src={
-                    photo.photo_url || 
-                    (photo.photo_blob ? photo.photo_blob : DEFAULT_PHOTO)
-                  }
-                  alt={photo.caption || 'Route photo'}
-                  className="rounded-lg w-full h-48 object-cover bg-gray-100 dark:bg-gray-700"
-                  onError={(e) => {
-                    e.currentTarget.src = DEFAULT_PHOTO;
-                  }}
-                />
-                {photo.caption && (
-                  <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm p-2 rounded-b-lg">
-                    {photo.caption}
-                  </p>
-                )}
-              </div>
-            )).concat(
+                }}>
+                  <img
+                    src={
+                      photo.photo_url ||
+                      (photo.photo_blob ? photo.photo_blob : DEFAULT_PHOTO)
+                    }
+                    alt={photo.caption || 'Route photo'}
+                    className="rounded-lg w-full h-48 object-cover bg-gray-100 dark:bg-gray-700"
+                    onError={(e) => {
+                      e.currentTarget.src = DEFAULT_PHOTO;
+                    }}
+                  />
+                  {photo.caption && (
+                    <p className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm p-2 rounded-b-lg">
+                      {photo.caption}
+                    </p>
+                  )}
+                </div>
+              );
+            }).concat(
               photos.length > 4 ? [(
                 <div
                   key="more-photos"

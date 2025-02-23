@@ -136,7 +136,8 @@ export function RouteDetails() {
               photo_url,
               photo_blob,
               caption,
-              order
+              order,
+              created_at
             )
           `)
           .eq('id', id)
