@@ -13,19 +13,19 @@ export function SearchResults() {
   const { profile, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
   interface Route {
-    id: any;
+    id: string;
     title: string;
     description: string;
     distance: number;
-    duration: any;
-    created_by: any;
+    duration: string | null;
+    created_by: string | null;
     upvotes: number;
     downvotes: number;
     created_at: string;
-    start_point: any;
-    end_point: any;
+    start_point: { lat: number; lng: number } | null;
+    end_point: { lat: number; lng: number } | null;
     route_tags: { tag: string }[];
-    route_photos: { photo_url: string; photo_blob: any; order: number }[];
+    route_photos: { photo_url: string; photo_blob: string | null; order: number }[];
   }
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
@@ -39,7 +39,7 @@ export function SearchResults() {
   const [maxDistance, setMaxDistance] = useState('100');
   const [maxRouteDistance, setMaxRouteDistance] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity'>(
+  const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity' | 'created_at'>(
     'distance'
   );
 
@@ -108,7 +108,7 @@ export function SearchResults() {
           );
           
           if (routesWithinDistance) {
-            const routeIds = routesWithinDistance.map((route: any) => route.id);
+            const routeIds: (string | number)[] = routesWithinDistance.map((route: any) => route.id);
             query = query.in('id', routeIds);
           }
         }
@@ -151,6 +151,10 @@ export function SearchResults() {
         } else if (sortBy === 'popularity') {
           sortedData.sort((a, b) => 
             (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes)
+          );
+        } else if (sortBy === 'created_at') {
+          sortedData.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
         }
 
@@ -245,7 +249,7 @@ export function SearchResults() {
         );
         
         if (routesWithinDistance) {
-          const routeIds = routesWithinDistance.map(route => route.id);
+          const routeIds: (string | number)[] = routesWithinDistance.map((route: { id: string | number }) => route.id);
           query = query.in('id', routeIds);
         }
       }
@@ -432,6 +436,7 @@ export function SearchResults() {
                 <option value="distance">Distance from You</option>
                 <option value="routeDistance">Route Distance</option>
                 <option value="popularity">Most Popular</option>
+                <option value="created_at">Newest</option>
               </select>
             </div>
           </div>

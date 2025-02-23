@@ -9,8 +9,8 @@ type Route = {
   title: string;
   description: string;
   distance: number;
-  duration: string;
-  created_by: string;
+  duration: string | null;
+  created_by: string | null;
   route_photos?: {
     photo_url: string;
     photo_blob: string | null;
