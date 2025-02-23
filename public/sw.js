@@ -1,19 +1,18 @@
 const CACHE_NAME = 'rocketmoto-v1';
+const STATIC_CACHE_NAME = 'rocketmoto-static-v1';
 
-// Add all the files we want to cache
-const urlsToCache = [
-  '/',
-  '/index.html',
+// Static assets that can be cached longer
+const staticUrlsToCache = [
   '/icon.svg',
   '/manifest.json'
 ];
 
-// Install service worker and cache all files
+// Install service worker and cache static files
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        return cache.addAll(staticUrlsToCache);
       })
   );
 });
@@ -24,7 +23,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (![CACHE_NAME, STATIC_CACHE_NAME].includes(cacheName)) {
             return caches.delete(cacheName);
           }
         })
@@ -33,38 +32,53 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch resources from cache or network
+// Fetch resources using network-first strategy for HTML and dynamic content
+// and cache-first strategy for static assets
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
+  // Use cache-first for static assets
+  if (staticUrlsToCache.some(staticUrl => event.request.url.endsWith(staticUrl))) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => response || fetch(event.request))
+    );
+    return;
+  }
+
+  // Network-first strategy for everything else
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        // Return cached response if found
-        if (response) {
-          return response;
+        // Clone the response
+        const responseToCache = response.clone();
+
+        // Only cache successful responses
+        if (response.ok) {
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              // Add no-cache header to dynamic content
+              const headers = new Headers(responseToCache.headers);
+              headers.append('Cache-Control', 'no-cache');
+              
+              const responseWithHeaders = new Response(
+                responseToCache.body,
+                {
+                  status: responseToCache.status,
+                  statusText: responseToCache.statusText,
+                  headers: headers
+                }
+              );
+              
+              cache.put(event.request, responseWithHeaders);
+            });
         }
 
-        // Clone the request because it can only be used once
-        const fetchRequest = event.request.clone();
-
-        // Make network request and cache the response
-        return fetch(fetchRequest).then(
-          (response) => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response because it can only be used once
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
+        return response;
+      })
+      .catch(() => {
+        // Fallback to cache if network fails
+        return caches.match(event.request);
       })
   );
 });
