@@ -15,6 +15,25 @@ type Route = {
     photo_url: string;
     photo_blob: string | null;
     order: number;
+    created_at: string;
+  }[];
+  route_tags?: { tag: string }[];
+  upvotes: number;
+  downvotes: number;
+};
+
+export type Route = {
+  id: string;
+  title: string;
+  description: string;
+  distance: number;
+  duration: string | null;
+  created_by: string | null;
+  route_photos?: {
+    photo_url: string;
+    photo_blob: string | null;
+    order: number;
+    created_at: string;
   }[];
   route_tags?: { tag: string }[];
   upvotes: number;
@@ -38,8 +57,8 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   useEffect(() => {
     function loadPhoto() {
       if (!route.route_photos?.length) return;
-      
-      const firstPhoto = route.route_photos.sort((a, b) => a.order - b.order)[0];
+
+      const firstPhoto = route.route_photos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
       
       if (firstPhoto.photo_url) {
         setCoverPhotoUrl(firstPhoto.photo_url);

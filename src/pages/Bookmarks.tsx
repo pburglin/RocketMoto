@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { RouteCard } from '../components/RouteCard';
+import { RouteCard, Route } from '../components/RouteCard';
 import { Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ const BOOKMARKS_PER_PAGE = 9;
 
 export function Bookmarks() {
   const { user } = useAuth();
-  const [bookmarkedRoutes, setBookmarkedRoutes] = useState<any[]>([]);
+  const [bookmarkedRoutes, setBookmarkedRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -35,7 +35,7 @@ export function Bookmarks() {
           route:routes (
             *,
             route_tags (tag),
-            route_photos (photo_url, order)
+            route_photos (photo_url, order, created_at)
           )
         `)
         .eq('user_id', user.id)
@@ -43,7 +43,8 @@ export function Bookmarks() {
         .range(startIndex, startIndex + BOOKMARKS_PER_PAGE - 1);
 
       if (!error && data) {
-        const routes = data.map(b => b.route);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const routes = data.map((b: { route: any }) => b.route as Route) as Route[];
         setBookmarkedRoutes(prev => isInitialLoad ? routes : [...prev, ...routes]);
         setHasMore(data.length === BOOKMARKS_PER_PAGE);
       }

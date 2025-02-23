@@ -25,7 +25,7 @@ export function SearchResults() {
     start_point: { lat: number; lng: number } | null;
     end_point: { lat: number; lng: number } | null;
     route_tags: { tag: string }[];
-    route_photos: { photo_url: string; photo_blob: string | null; order: number }[];
+    route_photos: { photo_url: string; photo_blob: string | null; order: number; created_at: string }[];
   }
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
@@ -39,9 +39,10 @@ export function SearchResults() {
   const [maxDistance, setMaxDistance] = useState('100');
   const [maxRouteDistance, setMaxRouteDistance] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity' | 'created_at'>(
-    'distance'
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity' | 'created_at'>('distance');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 
   useEffect(() => {
     async function fetchRoutes() {
@@ -65,7 +66,8 @@ export function SearchResults() {
           route_photos (
             photo_url,
             photo_blob,
-            order
+            order,
+            created_at
           )
         `);
 
@@ -108,7 +110,7 @@ export function SearchResults() {
           );
           
           if (routesWithinDistance) {
-            const routeIds: (string | number)[] = routesWithinDistance.map((route: any) => route.id);
+            const routeIds: (string | number)[] = routesWithinDistance.map((route: {id: string | number}) => route.id);
             query = query.in('id', routeIds);
           }
         }
@@ -158,7 +160,7 @@ export function SearchResults() {
           );
         }
 
-        setRoutes(sortedData);
+        setRoutes(sortedData as Route[]);
         setHasMore(sortedData.length === ROUTES_PER_PAGE);
       }
       setLoadingRoutes(false);
@@ -295,7 +297,7 @@ export function SearchResults() {
         );
       }
 
-      setRoutes(prev => isInitialLoad ? sortedData : [...prev, ...sortedData]);
+      setRoutes(prev => isInitialLoad ? (sortedData as Route[]) : [...prev, ...(sortedData as Route[])]);
       setHasMore(sortedData.length === ROUTES_PER_PAGE);
     }
     setLoadingRoutes(false);
@@ -429,7 +431,7 @@ export function SearchResults() {
               </label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as any)} // eslint-disable-line @typescript-eslint/no-explicit-any
                 className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="relevance">Relevance</option>

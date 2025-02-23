@@ -3,8 +3,14 @@ import { Settings, MapPin, LogOut, CheckCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
-import { RouteCard } from '../components/RouteCard';
+import { RouteCard, Route } from '../components/RouteCard';
 import { EditProfileModal } from '../components/EditProfileModal';
+
+type CompletedRoute = {
+  id: string;
+  completed_at: string;
+  route: Route;
+};
 
 const ROUTES_PER_PAGE = 6;
 const HISTORY_PER_PAGE = 5;
@@ -12,7 +18,7 @@ const HISTORY_PER_PAGE = 5;
 export function Profile() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
-  const [routes, setRoutes] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
   const [loadingMoreRoutes, setLoadingMoreRoutes] = useState(false);
   const [hasMoreRoutes, setHasMoreRoutes] = useState(true);
   const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
@@ -20,7 +26,7 @@ export function Profile() {
   const [ratings, setRatings] = useState<number>(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
-  const [completedRoutes, setCompletedRoutes] = useState<any[]>([]);
+  const [completedRoutes, setCompletedRoutes] = useState<CompletedRoute[]>([]);
   const [addressLoading, setAddressLoading] = useState(false);
   const [deletingRoute, setDeletingRoute] = useState<string | null>(null);
 
@@ -30,7 +36,7 @@ export function Profile() {
 
       setAddressLoading(true);
       try {
-        const [lat, lon] = profile.location.split(',').map(coord => coord.trim());
+        const [lat, lon] = profile.location.split(',').map((coord: string) => coord.trim());
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?` + 
           new URLSearchParams({
             lat: lat,
@@ -106,15 +112,19 @@ export function Profile() {
             distance,
             duration,
             route_tags (tag),
-            route_photos (photo_url, order)
+            route_photos (photo_url, order, created_at)
           )
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', user?.id)
         .order('completed_at', { ascending: false })
         .range(0, HISTORY_PER_PAGE - 1);
 
       if (completed) {
-        setCompletedRoutes(completed);
+        setCompletedRoutes(completed.map(c => ({
+          id: c.id,
+          completed_at: c.completed_at,
+          route: c.route[0] as Route
+        })) as CompletedRoute[]);
         setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
       }
 
@@ -128,10 +138,11 @@ export function Profile() {
           ),
           route_photos (
             photo_url,
-            order
+            order,
+            created_at
           )
         `)
-        .eq('created_by', user.id)
+        .eq('created_by', user?.id)
         .order('created_at', { ascending: false })
         .range(0, ROUTES_PER_PAGE - 1);
 
@@ -146,7 +157,7 @@ export function Profile() {
       const { count } = await supabase
         .from('route_ratings')
         .select('*', { count: 'exact' })
-        .eq('user_id', user.id);
+        .eq('user_id', user?.id);
 
       if (count !== null) {
         setRatings(count);
@@ -207,7 +218,7 @@ export function Profile() {
             distance,
             duration,
             route_tags (tag),
-            route_photos (photo_url, order)
+            route_photos (photo_url, order, created_at)
           )
         `)
         .eq('user_id', user.id)
@@ -217,7 +228,14 @@ export function Profile() {
       if (error) throw error;
 
       if (newHistory) {
-        setCompletedRoutes(prev => [...prev, ...newHistory]);
+        setCompletedRoutes(prev => [
+          ...prev,
+          ...newHistory.map(c => ({
+            id: c.id,
+            completed_at: c.completed_at,
+            route: c.route[0] as Route
+          }))
+        ]);
         setHasMoreHistory(newHistory.length === HISTORY_PER_PAGE);
       }
     } catch (err) {
