@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigation as NavigationIcon, Map, Search, ThumbsUp, Camera, Tag, AlertTriangle } from 'lucide-react';
+import { Navigation as NavigationIcon, Map, Search, ThumbsUp, Camera, Tag, AlertTriangle, Flag } from 'lucide-react';
 
 export function FAQ() {
   return (
@@ -75,6 +75,9 @@ export function FAQ() {
                     <li>• <strong>Coastal</strong> - Routes along the coastline</li>
                     <li>• <strong>Forest</strong> - Routes through forested areas</li>
                     <li>• <strong>Desert</strong> - Desert landscapes and open roads</li>
+                    <li>• <strong>Street</strong> - Perfect routes for street bikes, suited for urban adventures</li>
+                    <li>• <strong>Dirt</strong> - Ideal for dual-sport or adventure bikes tackling rugged terrains</li>
+                    <li>• <strong>Touring</strong> - Longer journeys, best enjoyed on comfortable touring bikes</li>
                   </ul>
                 </div>
               </div>
@@ -104,7 +107,7 @@ export function FAQ() {
                     &nbsp;&nbsp;&nbsp;• Never look at your phone while riding<br />
                     &nbsp;&nbsp;&nbsp;• Listen to audio directions through your helmet<br />
                     &nbsp;&nbsp;&nbsp;• Pull over safely if you need to check the route<br />
-                    &nbsp;&nbsp;&nbsp;• Always prioritize road safety over following directions
+                    &nbsp;&nbsp;&nbsp;• Always prioritize road safety over following navigation directions
                   </p>
                 </div>
               </div>
@@ -117,24 +120,27 @@ export function FAQ() {
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">How can I rate and review routes?</h3>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     After creating an account, you can:
-                    <br /><br />
-                    <strong>Important Privacy Note:</strong> To protect your privacy, never include personal information in:
+                    <br />
+                  </p>
+                  <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>• Rate routes with a thumbs up or down</li>
+                    <li>• Leave comments about your experience with the routes</li>
+                    <li>• Share tips about road conditions or points of interest</li>
+                    <li>• Help other riders by sharing updated information about the routes</li>
+                  </ul>
+                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    Remember to always share content to promote the best riding experience for our community
+                  </p>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    <br/>
+                    <strong>Important Privacy Note:</strong> To protect your privacy, you should not include personal information in:
                   </p>
                   <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
                     <li>• Your username or profile</li>
                     <li>• Comments or reviews</li>
                     <li>• Route descriptions</li>
                     <li>• Photo captions</li>
-                    <br />
-                    You can then:
-                    <li>• Give routes a thumbs up or down</li>
-                    <li>• Leave detailed comments about your experience</li>
-                    <li>• Share tips about road conditions or points of interest</li>
-                    <li>• Help other riders by rating accuracy and enjoyment</li>
                   </ul>
-                  <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                    Keep your content focused on the riding experience and avoid sharing any personally identifiable information.
-                  </p>
                 </div>
               </div>
             </div>
@@ -187,8 +193,41 @@ export function FAQ() {
                       </ul>
                     </li>
                     <li>5. Add an optional caption</li>
-                    <li>6. Photos help other riders identify landmarks and conditions</li>
+                    <li>6. Photos help other riders identify landmarks and route conditions</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Reporting Content</h2>
+          
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <Flag className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">How do I report inappropriate content?</h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    We count on the community to help keep RocketMoto safe and enjoyable for everyone.
+                    Please submit a report if you find incorrect information or anything that violates our terms of service.
+                  </p>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    To report a route for administrative review:
+                  </p>
+                  <ul className="mt-2 space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>1. Navigate to the route details page</li>
+                    <li>2. Click the "Report Route" button near the route title</li>
+                    <li>3. Select a reason for reporting</li>
+                    <li>4. Add any additional details about your concern</li>
+                    <li>5. Submit the report for review</li>
+                  </ul>
+                    <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    Content that violates our <a href="https://rocketmoto.us/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-700 dark:hover:text-gray-300">terms of service</a> will be removed.
+                    Repeat violators will have their accounts suspended or removed.
+                    </p>
                 </div>
               </div>
             </div>
@@ -198,7 +237,7 @@ export function FAQ() {
         <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-6">
           <h2 className="text-lg font-medium text-indigo-900 dark:text-indigo-100 mb-2">Need more help?</h2>
           <p className="text-indigo-700 dark:text-indigo-300">
-            Have a question that's not answered here? Feel free to contact us or ask the community in the route comments.
+            Have a question that's not answered here? Feel free to ask the community in the route comments. For bug reports or feature requests, please visit our <a href="https://github.com/pburglin/RocketMoto/issues" target="_blank" rel="noopener noreferrer" className="underline hover:text-indigo-500 dark:hover:text-indigo-400">GitHub Issues page</a>.
           </p>
         </div>
       </div>
