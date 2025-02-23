@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
+import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -30,15 +31,21 @@ const locationIcon = new Icon({
   iconAnchor: [12, 41],
 });
 
+type RoutingControlType = L.Control & {
+  addTo: (map: L.Map) => void;
+  remove: () => void;
+  on: (event: string, callback: (event: { routes: { coordinates: L.LatLng[] }[] }) => void) => void;
+};
+
 // Component to handle routing
 function RoutingMachine({ start, end }: { start: [number, number]; end: [number, number] }) {
   const map = useMap();
-  const routingControl = React.useRef<any>(null);
-  const routeLayerRef = React.useRef<any>(null);
+  const routingControl = React.useRef<RoutingControlType | null>(null);
+  const routeLayerRef = React.useRef<L.Polyline | null>(null);
   const [routeFound, setRouteFound] = useState(false);
 
   // Fit map to route bounds when route is found
-  function handleRouteFound(e: any) {
+  function handleRouteFound(e: { routes: { coordinates: L.LatLng[] }[] }) {
     if (!map) return;
 
     if (e.routes && e.routes[0]) {
@@ -76,7 +83,7 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
     if (!map) return;
 
     function cleanup() {
-      if (routingControl.current && map) {
+      if (routingControl.current) {
         try {
           map.removeControl(routingControl.current);
         } catch (err) {
@@ -85,7 +92,7 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
         routingControl.current = null;
       }
       
-      if (routeLayerRef.current && map) {
+      if (routeLayerRef.current) {
         try {
           map.removeLayer(routeLayerRef.current);
         } catch (err) {
@@ -101,7 +108,7 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
 
     if (!start || !end) return;
 
-    // @ts-ignore - leaflet-routing-machine types are not available
+    // @ts-expect-error - leaflet-routing-machine types are not available
     routingControl.current = L.Routing.control({
       waypoints: [
         L.latLng(start[0], start[1]),
@@ -123,7 +130,9 @@ function RoutingMachine({ start, end }: { start: [number, number]; end: [number,
       fitSelectedRoute: true
     }).on('routesfound', handleRouteFound);
 
-    routingControl.current.addTo(map);
+    if (routingControl.current) {
+      routingControl.current.addTo(map);
+    }
 
     return cleanup;
   }, [start, end, map]);
@@ -138,44 +147,64 @@ type RouteMapProps = {
   onMapInstance: (map: L.Map) => void;
 };
 
-export function RouteMap({ startPoint, endPoint, currentLocation, onMapInstance }: RouteMapProps) {
-  const [mapLoaded, setMapLoaded] = React.useState(false);
+export const RouteMap = React.memo(
+  function RouteMap({
+    startPoint,
+    endPoint,
+    currentLocation,
+    onMapInstance
+  }: RouteMapProps) {
+    const [mapLoaded, setMapLoaded] = React.useState(false);
 
-  function handleMapLoad(map: L.Map) {
-    onMapInstance(map);
-    setMapLoaded(true);
-  }
+    function handleMapLoad(map: L.Map) {
+      onMapInstance(map);
+      setMapLoaded(true);
+    }
 
-  return (
-    <div className="h-[400px] rounded-lg overflow-hidden shadow-lg relative">
-      {!mapLoaded && (
-        <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 z-[1000] flex items-center justify-center">
-          Loading map...
-        </div>
-      )}
-      <MapContainer
-        center={startPoint}
-        zoom={13}
-        className="h-full w-full z-0"
-        ref={handleMapLoad}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        />
-        <Marker position={startPoint} icon={startIcon}>
-          <Popup>Route start point</Popup>
-        </Marker>
-        <Marker position={endPoint} icon={endIcon}>
-          <Popup>Route end point</Popup>
-        </Marker>
-        {currentLocation && (
-          <Marker position={currentLocation} icon={locationIcon}>
-            <Popup>Your current location</Popup>
-          </Marker>
+    return (
+      <div className="h-[400px] rounded-lg overflow-hidden shadow-lg relative">
+        {!mapLoaded && (
+          <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 z-[1000] flex items-center justify-center">
+            Loading map...
+          </div>
         )}
-        {mapLoaded && <RoutingMachine start={startPoint} end={endPoint} />}
-      </MapContainer>
-    </div>
-  );
-}
+        <MapContainer
+          center={startPoint}
+          zoom={13}
+          className="h-full w-full z-0"
+          ref={handleMapLoad}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          <Marker position={startPoint} icon={startIcon}>
+            <Popup>Route start point</Popup>
+          </Marker>
+          <Marker position={endPoint} icon={endIcon}>
+            <Popup>Route end point</Popup>
+          </Marker>
+          {currentLocation && (
+            <Marker position={currentLocation} icon={locationIcon}>
+              <Popup>Your current location</Popup>
+            </Marker>
+          )}
+          {mapLoaded && <RoutingMachine start={startPoint} end={endPoint} />}
+        </MapContainer>
+      </div>
+    );
+  },
+  (prevProps: RouteMapProps, nextProps: RouteMapProps): boolean => {
+    // Only re-render if coordinates change or currentLocation changes
+    const startEqual = prevProps.startPoint[0] === nextProps.startPoint[0] &&
+                      prevProps.startPoint[1] === nextProps.startPoint[1];
+    const endEqual = prevProps.endPoint[0] === nextProps.endPoint[0] &&
+                    prevProps.endPoint[1] === nextProps.endPoint[1];
+    const locationEqual = (!prevProps.currentLocation && !nextProps.currentLocation) ||
+                         (prevProps.currentLocation && nextProps.currentLocation &&
+                          prevProps.currentLocation[0] === nextProps.currentLocation[0] &&
+                          prevProps.currentLocation[1] === nextProps.currentLocation[1]);
+    
+    return Boolean(startEqual && endEqual && locationEqual);
+  }
+);
