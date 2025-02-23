@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { Loader as Road, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Loader as Road, ThumbsUp, ThumbsDown, Bookmark, CheckCircle, CheckCheckIcon, CheckSquareIcon, CheckCircle2, CheckCircle2Icon, CheckCircleIcon, CheckIcon, BookmarkCheck, BookmarkCheckIcon, PinIcon, TagIcon, AwardIcon, CrownIcon } from 'lucide-react';
+import { useBookmark } from '../lib/useBookmark';
+import { useCompletion } from '../lib/useCompletion';
 import { formatDistance } from '../lib/utils';
 
 export type Route = {
@@ -34,6 +36,8 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { distanceUnit } = useAuth();
   const navigate = useNavigate();
   const isAuthor = user?.id === route.created_by;
+  const { isBookmarked } = useBookmark(route.id);
+  const { isCompleted } = useCompletion(route.id);
 
   const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(DEFAULT_PHOTO);
 
@@ -72,6 +76,16 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
         />
         {!route.route_photos?.length && (
           <Road className="absolute inset-0 m-auto h-12 w-12 text-gray-400" />
+        )}
+        {isBookmarked && (
+          <div className="absolute top-2 right-2">
+            <Bookmark className="h-6 w-6 text-red-500 fill-current" />
+          </div>
+        )}
+        {isCompleted && (
+          <div className="absolute top-2 left-2">
+            <CrownIcon className="h-6 w-6 text-green-500 fill-current" />
+          </div>
         )}
       </div>
       <div className="p-4">
