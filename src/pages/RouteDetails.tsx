@@ -40,6 +40,31 @@ export function RouteDetails() {
   const { id } = useParams<{ id: string }>();
   const { user, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
+  const [reportExpanded, setReportExpanded] = useState(false);
+  const [reportDetails, setReportDetails] = useState('');
+
+  async function handleSubmitReport() {
+    if (!user || !id) return;
+
+    try {
+      const { error } = await supabase.from('route_reports').insert([
+        {
+          route_id: id,
+          user_id: user.id,
+          details: reportDetails,
+        },
+      ]);
+
+      if (error) throw error;
+
+      alert('Report submitted successfully!');
+      setReportExpanded(false);
+      setReportDetails('');
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      alert('Failed to submit report. Please try again.');
+    }
+  }
   const [route, setRoute] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -426,6 +451,45 @@ export function RouteDetails() {
             isOwner={user?.id === route.created_by}
             onPhotosUpdated={(photos) => setRoute({ ...route, route_photos: photos })}
           />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Report Route</h2>
+            {/* Report Section */}
+            {user && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setReportExpanded(!reportExpanded)}
+                  className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
+                >
+                  {reportExpanded ? 'Hide Report Form' : 'Show Report Form'}
+                </button>
+
+                {reportExpanded && (
+                  <div className="mt-4">
+                    <label htmlFor="reportDetails" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Details
+                    </label>
+                    <div className="mt-1">
+                      <textarea
+                        id="reportDetails"
+                        rows={4}
+                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-gray-700 rounded-md dark:bg-gray-700 dark:text-gray-200"
+                        placeholder="Please provide details about why you are reporting this route for review."
+                        value={reportDetails}
+                        onChange={(e) => setReportDetails(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSubmitReport}
+                      className="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                    >
+                      Submit Report
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* End Report Section */}
+          </div>
         </div>
       </div>
     </div>
