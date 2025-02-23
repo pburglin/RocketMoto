@@ -8,7 +8,11 @@ type BeforeInstallPromptEvent = Event & {
 
 type Platform = 'ios' | 'chrome' | 'other';
 
-export function AddToHomescreen() {
+interface AddToHomescreenProps {
+  className?: string;
+}
+
+export function AddToHomescreen({ className }: AddToHomescreenProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
@@ -78,7 +82,7 @@ export function AddToHomescreen() {
       <>
         <button
           onClick={() => setShowIOSInstructions(true)}
-          className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
+          className={`text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center ${className}`}
         >
           <Share className="h-5 w-5 mr-2" />
           Add to Home Screen
@@ -114,7 +118,7 @@ export function AddToHomescreen() {
     return (
       <button
         onClick={handleInstall}
-        className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
+        className={`text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center ${className}`}
       >
         <Download className="h-5 w-5 mr-2" />
         Add to Home Screen

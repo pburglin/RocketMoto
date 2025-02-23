@@ -38,7 +38,7 @@ export function Footer() {
                   <Github className="h-5 w-5 mr-2" />
                   GitHub
                 </a>
-                <AddToHomescreen />
+                <AddToHomescreen className="mt-2" />
               </li>
             </ul>
           </div>
