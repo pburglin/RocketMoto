@@ -24,6 +24,7 @@ export function Profile() {
   const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
   const [ratings, setRatings] = useState<number>(0);
+  const [totalRoutes, setTotalRoutes] = useState<number>(0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [completedRoutes, setCompletedRoutes] = useState<CompletedRoute[]>([]);
@@ -92,6 +93,25 @@ export function Profile() {
     fetchAddress();
   }, [profile?.location]);
 
+  // Fetch total routes count separately
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchTotalRoutes() {
+      if (!user) return;
+      
+      const { count: routesCount } = await supabase
+        .from('routes')
+        .select('*', { count: 'exact' })
+        .eq('created_by', user.id);
+      
+      setTotalRoutes(routesCount || 0);
+    }
+
+    fetchTotalRoutes();
+  }, [user]);
+
+  // Fetch paginated routes and other data
   useEffect(() => {
     if (!user) {
       navigate('/');
@@ -128,7 +148,7 @@ export function Profile() {
         setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
       }
 
-      // Fetch user's routes
+      // Fetch paginated routes
       const { data: userRoutes, error: routesError } = await supabase
         .from('routes')
         .select(`
@@ -193,6 +213,14 @@ export function Profile() {
       if (newRoutes) {
         setRoutes(prev => [...prev, ...newRoutes]);
         setHasMoreRoutes(newRoutes.length === ROUTES_PER_PAGE);
+        
+        // Refresh the total count when loading more routes
+        const { count: refreshedCount } = await supabase
+          .from('routes')
+          .select('*', { count: 'exact' })
+          .eq('created_by', user.id);
+        
+        setTotalRoutes(refreshedCount || 0);
       }
     } catch (err) {
       console.error('Error loading more routes:', err);
@@ -357,12 +385,12 @@ export function Profile() {
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{routes.length}</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalRoutes}</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">Routes Created</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">{ratings}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Route Ratings</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Route Likes</div>
                 </div>
               </div>
             </div>
@@ -378,15 +406,17 @@ export function Profile() {
             {completedRoutes.length > 0 ? (
               <>
                 <div className="space-y-4">
-                  {completedRoutes.map((completed) => (
+                  {completedRoutes.filter(completed => completed && completed.route).map((completed) => (
                     <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
                       <div className="flex-1">
-                        <Link
-                          to={`/routes/${completed.route.id}`}
-                          className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
-                        >
-                          {completed.route.title}
-                        </Link>
+                        {completed.route && (
+                          <Link
+                            to={`/routes/${completed.route.id}`}
+                            className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
+                          >
+                            {completed.route.title}
+                          </Link>
+                        )}
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           Completed on {new Date(completed.completed_at).toLocaleDateString()}
                         </p>

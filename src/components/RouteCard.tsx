@@ -1,26 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { Loader as Road, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { formatDistance } from '../lib/utils';
-
-type Route = {
-  id: string;
-  title: string;
-  description: string;
-  distance: number;
-  duration: string | null;
-  created_by: string | null;
-  route_photos?: {
-    photo_url: string;
-    photo_blob: string | null;
-    order: number;
-    created_at: string;
-  }[];
-  route_tags?: { tag: string }[];
-  upvotes: number;
-  downvotes: number;
-};
 
 export type Route = {
   id: string;
@@ -50,6 +32,7 @@ const DEFAULT_PHOTO = 'https://source.unsplash.com/random/800x600?road,motorcycl
 export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { user } = useAuth();
   const { distanceUnit } = useAuth();
+  const navigate = useNavigate();
   const isAuthor = user?.id === route.created_by;
 
   const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(DEFAULT_PHOTO);
@@ -122,13 +105,16 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
           </div>
           <div className="relative z-10">
             {showEdit && isAuthor && (
-              <Link
-                to={`/routes/${route.id}/edit`}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigate(`/routes/${route.id}/edit`);
+                }}
                 className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
-                onClick={(e) => e.stopPropagation()}
               >
                 Edit
-              </Link>
+              </button>
             )}
           </div>
         </div>
