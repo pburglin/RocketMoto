@@ -347,7 +347,8 @@ export function Profile() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* User Profile Section */}
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <div className="text-center">
@@ -397,66 +398,70 @@ export function Profile() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mt-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-            <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
-            Route History
-          </h2>
-          <div>
-            {completedRoutes.length > 0 ? (
-              <>
-                <div className="space-y-4">
-                  {completedRoutes.filter(completed => completed && completed.route).map((completed) => (
-                    <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-                      <div className="flex-1">
-                        {completed.route && (
-                          <Link
-                            to={`/routes/${completed.route.id}`}
-                            className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
-                          >
-                            {completed.route.title}
-                          </Link>
-                        )}
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Completed on {new Date(completed.completed_at).toLocaleDateString()}
-                        </p>
+        {/* Route History Section */}
+        <div className="lg:col-span-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-full">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+              <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
+              Route History
+            </h2>
+            <div>
+              {completedRoutes.length > 0 ? (
+                <>
+                  <div className="space-y-4">
+                    {completedRoutes.filter(completed => completed && completed.route).map((completed) => (
+                      <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
+                        <div className="flex-1">
+                          {completed.route && (
+                            <Link
+                              to={`/routes/${completed.route.id}`}
+                              className="text-lg font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400"
+                            >
+                              {completed.route.title}
+                            </Link>
+                          )}
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Completed on {new Date(completed.completed_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveCompleted(completed.id)}
+                          disabled={deletingRoute === completed.id}
+                          className="ml-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
                       </div>
+                    ))}
+                  </div>
+                  {hasMoreHistory && (
+                    <div className="mt-6 text-center">
                       <button
-                        onClick={() => handleRemoveCompleted(completed.id)}
-                        disabled={deletingRoute === completed.id}
-                        className="ml-4 p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={loadMoreHistory}
+                        disabled={loadingMoreHistory}
+                        className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
                       >
-                        <Trash2 className="h-5 w-5" />
+                        {loadingMoreHistory ? 'Loading...' : 'Load More History'}
                       </button>
                     </div>
-                  ))}
-                </div>
-                {hasMoreHistory && (
-                  <div className="mt-6 text-center">
-                    <button
-                      onClick={loadMoreHistory}
-                      disabled={loadingMoreHistory}
-                      className="px-4 py-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium disabled:opacity-50"
-                    >
-                      {loadingMoreHistory ? 'Loading...' : 'Load More History'}
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                You haven't completed any routes yet
-              </p>
-            )}
+                  )}
+                </>
+              ) : (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  You haven't completed any routes yet
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* My Routes Section */}
         <div className="lg:col-span-3">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-full">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">My Routes</h2>
             {routes.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                   {routes.map((route) => (
                     <RouteCard key={route.id} route={route} showEdit />
                   ))}
@@ -481,6 +486,7 @@ export function Profile() {
           </div>
         </div>
       </div>
+
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
