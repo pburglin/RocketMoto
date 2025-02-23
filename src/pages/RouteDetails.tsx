@@ -251,7 +251,7 @@ export function RouteDetails() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center dark:text-gray-200">Loading...</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading route details...</div>
       </div>
     );
   }
