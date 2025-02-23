@@ -12,15 +12,30 @@ const ROUTES_PER_PAGE = 9;
 export function SearchResults() {
   const { profile, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
-  const [routes, setRoutes] = useState<any[]>([]);
+  interface Route {
+    id: any;
+    title: string;
+    description: string;
+    distance: number;
+    duration: any;
+    created_by: any;
+    upvotes: number;
+    downvotes: number;
+    created_at: string;
+    start_point: any;
+    end_point: any;
+    route_tags: { tag: string }[];
+    route_photos: { photo_url: string; photo_blob: any; order: number }[];
+  }
+  const [routes, setRoutes] = useState<Route[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const setSearchParams = useSearchParams()[1];
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
 
   // Search and filter state
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || ''); // Initialize searchTerm from URL
   const [maxDistance, setMaxDistance] = useState('100');
   const [maxRouteDistance, setMaxRouteDistance] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
