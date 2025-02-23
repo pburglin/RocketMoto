@@ -11,6 +11,7 @@ import { FAQ } from './pages/FAQ';
 import { Bookmarks } from './pages/Bookmarks';
 import { Footer } from './components/Footer';
 import { TermsOfService } from './pages/TermsOfService';
+import { Leaderboards } from './pages/Leaderboards';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/leaderboards" element={<Leaderboards />} />
           </Routes>
         </main>
         <Footer />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HelpCircle, Github } from 'lucide-react';
+import { HelpCircle, Github, Trophy } from 'lucide-react';
 import { AddToHomescreen } from './AddToHomescreen';
 
 export function Footer() {
@@ -29,8 +29,17 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link
+                  to="/leaderboards"
+                  className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
+                >
+                  <Trophy className="h-5 w-5 mr-2" />
+                  Leaderboards
+                </Link>
+              </li>
+              <li>
                 <a 
-                  href="https://github.com/yourusername/motorcycle-route-explorer"
+                  href="https://github.com/pburglin/RocketMoto"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
