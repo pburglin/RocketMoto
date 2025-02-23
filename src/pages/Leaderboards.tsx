@@ -60,7 +60,7 @@ export function Leaderboards() {
         {/* Top Routes Section */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Top 5 Most Popular Routes
+            Most Popular Routes
           </h2>
           {loading ? (
             <p className="text-gray-600 dark:text-gray-300">Loading...</p>
@@ -83,10 +83,10 @@ export function Leaderboards() {
           )}
         </div>
 
-        {/* Top Authors Section */}
+        {/* Top Contributors Section */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-            Top 10 Route Authors
+            Top Community Contributors
           </h2>
           {loading ? (
             <p className="text-gray-600 dark:text-gray-300">Loading...</p>
