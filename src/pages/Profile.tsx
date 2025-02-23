@@ -466,7 +466,7 @@ export function Profile() {
               />
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">{profile.username}</h1>
               <p className="text-gray-500 dark:text-gray-400">
-                Joined {new Date(profile.created_at).getFullYear()}
+                Member since {new Date(profile.created_at).toLocaleString('en-US', { month: 'long', year: 'numeric' })}
               </p>
               <div className="mt-4 space-y-2">
                 <button

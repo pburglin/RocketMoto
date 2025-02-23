@@ -115,7 +115,6 @@ export function Leaderboards() {
                           Member since {new Intl.DateTimeFormat('en-US', {
                             year: 'numeric',
                             month: 'long',
-                            day: 'numeric',
                             timeZone: 'UTC'
                           }).format(new Date(author.created_at))}
                         </p>
