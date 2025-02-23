@@ -164,7 +164,7 @@ export function Profile() {
         .order('completed_at', { ascending: false })
         .range(0, HISTORY_PER_PAGE - 1);
 
-      console.log('Completed routes raw data:', completed);
+      //console.log('Completed routes raw data:', completed);
       
       if (completedError) {
         console.error('Error fetching completed routes:', completedError);
@@ -173,7 +173,7 @@ export function Profile() {
 
       if (completed) {
         const rawData = completed as unknown as RawCompletedRoute[];
-        console.log('Raw completed routes:', rawData);
+        //console.log('Raw completed routes:', rawData);
         
         const validCompletedRoutes = rawData
           .filter(c => {
@@ -209,7 +209,7 @@ export function Profile() {
             };
           });
         
-        console.log('Processed routes:', validCompletedRoutes);
+        //console.log('Processed routes:', validCompletedRoutes);
         setCompletedRoutes(validCompletedRoutes);
         setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
       }

@@ -46,14 +46,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for everything else
+  // Only handle GET requests, ignore others
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Network-first strategy for GET requests
   event.respondWith(
     fetch(event.request)
       .then((response) => {
         // Clone the response
         const responseToCache = response.clone();
 
-        // Only cache successful responses
+        // Only cache successful GET responses
         if (response.ok) {
           caches.open(CACHE_NAME)
             .then((cache) => {

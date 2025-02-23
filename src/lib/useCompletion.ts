@@ -7,31 +7,47 @@ export function useCompletion(routeId: string) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     async function checkCompletionStatus() {
       const { data: session } = await supabase.auth.getSession();
-      if (!session.session) {
+      if (!session.session || !mounted) {
         setLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        const { error, count } = await supabase
           .from('completed_routes')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .eq('route_id', routeId)
-          .eq('user_id', session.session.user.id)
-          .single();
+          .eq('user_id', session.session.user.id);
 
-        if (error && error.code !== 'PGRST116') throw error;
-        setIsCompleted(!!data);
+        if (!mounted) return;
+
+        if (error) {
+          console.error('Error checking completion status:', error);
+          setError(error.message);
+          return;
+        }
+
+        setIsCompleted(count === 1);
+        setError(null);
       } catch (err) {
+        if (!mounted) return;
         console.error('Error checking completion status:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     checkCompletionStatus();
+    return () => {
+      mounted = false;
+    };
   }, [routeId]);
 
   async function toggleCompletion() {
