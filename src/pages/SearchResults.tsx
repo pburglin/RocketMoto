@@ -408,7 +408,7 @@ export function SearchResults() {
                 Route Tags
               </label>
               <div className="flex flex-wrap gap-2">
-                {['scenic', 'curves', 'mountain', 'coastal', 'forest', 'desert'].map((tag) => (
+                {['scenic', 'curves', 'mountain', 'coastal', 'forest', 'desert', 'street', 'dirt', 'touring'].map((tag) => (
                   <button
                     key={tag}
                     type="button"
