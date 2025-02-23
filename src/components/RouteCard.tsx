@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { Loader as Road, ThumbsUp, ThumbsDown, Bookmark, CheckCircle, CheckCheckIcon, CheckSquareIcon, CheckCircle2, CheckCircle2Icon, CheckCircleIcon, CheckIcon, BookmarkCheck, BookmarkCheckIcon, PinIcon, TagIcon, AwardIcon, CrownIcon } from 'lucide-react';
+import { Loader as Road, ThumbsUp, ThumbsDown, Bookmark, CrownIcon } from 'lucide-react';
 import { useBookmark } from '../lib/useBookmark';
 import { useCompletion } from '../lib/useCompletion';
-import { formatDistance } from '../lib/utils';
+import { formatDistance, formatDuration } from '../lib/utils';
 
 export type Route = {
   id: string;
@@ -105,7 +105,7 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
         </p>
         <div className="flex justify-between items-center text-sm">
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            {formatDistance(route.distance, distanceUnit)} • {route.duration}
+            {formatDistance(route.distance, distanceUnit)} • {formatDuration(route.duration)}
           </span>
           <div className="flex items-center gap-4 text-gray-500 dark:text-gray-400">
             <span className="flex items-center">

@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth';
 import { useRating } from '../lib/useRating';
 import { useBookmark } from '../lib/useBookmark';
 import { useLocation } from '../lib/location';
-import { formatDistance, formatDate } from '../lib/utils';
+import { formatDistance, formatDate, formatDuration } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 
 type RoutePhoto = {
@@ -381,7 +381,7 @@ export function RouteDetails() {
                 </div>
                 <div className="text-center">
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
-                  <p className="text-lg text-gray-900 dark:text-white">{route.duration}</p>
+                  <p className="text-lg text-gray-900 dark:text-white">{formatDuration(route.duration)}</p>
                 </div>
               </div>
               

@@ -17,6 +17,21 @@ export function formatDistance(kilometers: number, unit: 'km' | 'mi'): string {
   return `${kilometers.toFixed(1)} km`;
 }
 
+// Format duration from "hh:mm:ss" to "Est. Xh Ym"
+export function formatDuration(duration: string | null): string {
+  if (!duration) return '';
+  
+  const [hours, minutes] = duration.split(':').map(Number);
+  
+  if (isNaN(hours) || isNaN(minutes)) return '';
+  
+  if (hours === 0) {
+    return `Est. ${minutes}m`;
+  }
+  
+  return `Est. ${hours}h ${minutes}m`;
+}
+
 // Format date in a relative, human-friendly way
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
