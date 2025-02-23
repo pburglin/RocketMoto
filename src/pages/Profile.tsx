@@ -6,7 +6,33 @@ import { useNavigate, Link } from 'react-router-dom';
 import { RouteCard, Route } from '../components/RouteCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 
-type CompletedRoute = {
+interface RawRoutePhoto {
+  photo_url: string;
+  photo_blob: string | null;
+  order: number;
+  created_at: string;
+}
+
+interface RawRoute {
+  id: string;
+  title: string;
+  description: string;
+  distance: number;
+  duration: string | null;
+  created_by: string | null;
+  route_tags: { tag: string }[];
+  route_photos: RawRoutePhoto[];
+  upvotes: number;
+  downvotes: number;
+}
+
+interface RawCompletedRoute {
+  id: string;
+  completed_at: string;
+  routes: RawRoute;
+}
+
+interface CompletedRoute {
   id: string;
   completed_at: string;
   route: Route;
@@ -111,26 +137,25 @@ export function Profile() {
     fetchTotalRoutes();
   }, [user]);
 
-  // Fetch paginated routes and other data
+  // Fetch completed routes
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
+    if (!user) return;
 
-    async function fetchUserData() {
-      // Fetch completed routes
-      const { data: completed } = await supabase
+    async function fetchCompletedRoutes() {
+      const { data: completed, error: completedError } = await supabase
         .from('completed_routes')
         .select(`
           id,
           completed_at,
-          route:routes (
+          routes:routes (
             id,
             title,
             description,
             distance,
             duration,
+            created_by,
+            upvotes,
+            downvotes,
             route_tags (tag),
             route_photos (photo_url, order, created_at)
           )
@@ -139,16 +164,65 @@ export function Profile() {
         .order('completed_at', { ascending: false })
         .range(0, HISTORY_PER_PAGE - 1);
 
-      if (completed) {
-        setCompletedRoutes(completed.map(c => ({
-          id: c.id,
-          completed_at: c.completed_at,
-          route: c.route[0] as Route
-        })) as CompletedRoute[]);
-        setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
+      console.log('Completed routes raw data:', completed);
+      
+      if (completedError) {
+        console.error('Error fetching completed routes:', completedError);
+        return;
       }
 
-      // Fetch paginated routes
+      if (completed) {
+        const rawData = completed as unknown as RawCompletedRoute[];
+        console.log('Raw completed routes:', rawData);
+        
+        const validCompletedRoutes = rawData
+          .filter(c => {
+            const hasValidRoute = Boolean(c?.routes);
+            if (!hasValidRoute) {
+              console.log('Filtering out invalid completed route:', c);
+            }
+            return hasValidRoute;
+          })
+          .map(c => {
+            const routePhotos = (c.routes.route_photos || []).map(photo => ({
+              ...photo,
+              photo_blob: null  // Add missing photo_blob field
+            }));
+
+            const route: Route = {
+              id: c.routes.id,
+              title: c.routes.title,
+              description: c.routes.description,
+              distance: c.routes.distance,
+              duration: c.routes.duration || null,
+              created_by: c.routes.created_by || null,
+              upvotes: c.routes.upvotes || 0,
+              downvotes: c.routes.downvotes || 0,
+              route_tags: c.routes.route_tags || [],
+              route_photos: routePhotos
+            };
+            
+            return {
+              id: c.id,
+              completed_at: c.completed_at,
+              route
+            };
+          });
+        
+        console.log('Processed routes:', validCompletedRoutes);
+        setCompletedRoutes(validCompletedRoutes);
+        setHasMoreHistory(completed.length === HISTORY_PER_PAGE);
+      }
+    }
+
+    fetchCompletedRoutes();
+  }, [user]);
+
+  // Fetch user's routes
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchUserRoutes() {
       const { data: userRoutes, error: routesError } = await supabase
         .from('routes')
         .select(`
@@ -172,8 +246,16 @@ export function Profile() {
         setRoutes(userRoutes);
         setHasMoreRoutes(userRoutes.length === ROUTES_PER_PAGE);
       }
+    }
 
-      // Fetch user's ratings count
+    fetchUserRoutes();
+  }, [user]);
+
+  // Fetch user's ratings count
+  useEffect(() => {
+    if (!user) return;
+
+    async function fetchUserRatings() {
       const { count } = await supabase
         .from('route_ratings')
         .select('*', { count: 'exact' })
@@ -184,8 +266,8 @@ export function Profile() {
       }
     }
 
-    fetchUserData();
-  }, [user, navigate]);
+    fetchUserRatings();
+  }, [user]);
 
   async function loadMoreRoutes() {
     if (!user || loadingMoreRoutes) return;
@@ -239,12 +321,15 @@ export function Profile() {
         .select(`
           id,
           completed_at,
-          route:routes (
+          routes:routes (
             id,
             title,
             description,
             distance,
             duration,
+            created_by,
+            upvotes,
+            downvotes,
             route_tags (tag),
             route_photos (photo_url, order, created_at)
           )
@@ -258,11 +343,33 @@ export function Profile() {
       if (newHistory) {
         setCompletedRoutes(prev => [
           ...prev,
-          ...newHistory.map(c => ({
-            id: c.id,
-            completed_at: c.completed_at,
-            route: c.route[0] as Route
-          }))
+          ...(newHistory as unknown as RawCompletedRoute[])
+            .filter(c => Boolean(c?.routes))
+            .map(c => {
+              const routePhotos = (c.routes.route_photos || []).map(photo => ({
+                ...photo,
+                photo_blob: null
+              }));
+
+              const route: Route = {
+                id: c.routes.id,
+                title: c.routes.title,
+                description: c.routes.description,
+                distance: c.routes.distance,
+                duration: c.routes.duration || null,
+                created_by: c.routes.created_by || null,
+                upvotes: c.routes.upvotes || 0,
+                downvotes: c.routes.downvotes || 0,
+                route_tags: c.routes.route_tags || [],
+                route_photos: routePhotos
+              };
+
+              return {
+                id: c.id,
+                completed_at: c.completed_at,
+                route
+              };
+            })
         ]);
         setHasMoreHistory(newHistory.length === HISTORY_PER_PAGE);
       }
@@ -409,7 +516,7 @@ export function Profile() {
               {completedRoutes.length > 0 ? (
                 <>
                   <div className="space-y-4">
-                    {completedRoutes.filter(completed => completed && completed.route).map((completed) => (
+                    {completedRoutes.map((completed) => (
                       <div key={completed.id} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
                         <div className="flex-1">
                           {completed.route && (
