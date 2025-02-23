@@ -4,7 +4,7 @@ import { RouteMap } from '../components/route/RouteMap';
 import { RoutePhotos } from '../components/route/RoutePhotos';
 import { RouteComments } from '../components/route/RouteComments';
 import { RouteActions } from '../components/route/RouteActions';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useRating } from '../lib/useRating';
 import { useBookmark } from '../lib/useBookmark';
@@ -12,36 +12,28 @@ import { useLocation } from '../lib/location';
 import { formatDistance, formatDate } from '../lib/utils';
 import { supabase } from '../lib/supabase';
 
+type RoutePhoto = {
+  id: string;
+  photo_url: string;
+  photo_blob: string | null;
+  caption: string;
+  order: number;
+};
+
 type RouteData = {
   id: string;
   title: string;
   description: string;
-  start_point: string;
-  end_point: string;
+  start_point: { coordinates: [number, number] };
+  end_point: { coordinates: [number, number] };
   distance: number;
   duration: string;
   created_by: string;
   created_at: string;
   upvotes: number;
   downvotes: number;
-  route_photos?: {
-    id: string;
-    photo_url: string;
-    caption: string;
-    order: number;
-  }[];
+  route_photos?: RoutePhoto[];
   route_tags?: { tag: string }[];
-};
-
-type Comment = {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  user: {
-    username: string;
-    avatar_url: string;
-  };
 };
 
 export function RouteDetails() {
@@ -49,12 +41,8 @@ export function RouteDetails() {
   const { user, distanceUnit } = useAuth();
   const { currentLocation } = useLocation();
   const [route, setRoute] = useState<RouteData | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const [error, setError] = useState<string | undefined>();
   const { userRating, upvotes, downvotes, rateRoute, loading: ratingLoading, error: ratingError } = useRating(id || '');
   const [isCompleted, setIsCompleted] = useState(false);
   const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
@@ -138,21 +126,7 @@ export function RouteDetails() {
           setRouteCreator(creator);
         }
 
-        // Fetch comments with user details
-        const { data: commentsData, error: commentsError } = await supabase
-          .from('route_comments')
-          .select(`
-            *,
-            user:users (
-              username,
-              avatar_url
-            )
-          `)
-          .eq('route_id', id)
-          .order('created_at', { ascending: false });
-
-        if (commentsError) throw commentsError;
-        setComments(commentsData);
+        // Comments are now handled by the RouteComments component
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load route details');
       } finally {
@@ -190,41 +164,6 @@ export function RouteDetails() {
 
     calculateDistance();
   }, [currentLocation, route]);
-
-  async function handleSubmitComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user || !route || !newComment.trim()) return;
-
-    setSubmitting(true);
-    try {
-      const { data: comment, error } = await supabase
-        .from('route_comments')
-        .insert([
-          {
-            route_id: route.id,
-            user_id: user.id,
-            content: newComment.trim()
-          }
-        ])
-        .select(`
-          *,
-          user:users (
-            username,
-            avatar_url
-          )
-        `)
-        .single();
-
-      if (error) throw error;
-
-      setComments([comment, ...comments]);
-      setNewComment('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to post comment');
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   function handleNavigate(type: 'start' | 'end') {
     if (!route) return;
@@ -289,7 +228,9 @@ export function RouteDetails() {
   if (!route) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center text-red-600">Route not found</div>
+        <div className="text-center text-red-600">
+          {error || 'Route not found'}
+        </div>
       </div>
     );
   }
@@ -379,8 +320,8 @@ export function RouteDetails() {
               onToggleBookmark={toggleBookmark}
               onToggleCompleted={handleToggleCompleted}
               onNavigate={handleNavigate}
-              ratingError={ratingError}
-              bookmarkError={bookmarkError}
+              ratingError={ratingError || undefined}
+              bookmarkError={bookmarkError || undefined}
             />
           </div>
 
@@ -388,28 +329,31 @@ export function RouteDetails() {
             startPoint={startPoint}
             endPoint={endPoint}
             currentLocation={currentLocation ? [currentLocation.lat, currentLocation.lng] : null}
-            onMapInstance={setMapInstance}
+            onMapInstance={() => {}}
           />
 
           <RouteComments
             routeId={route.id}
             isAuthenticated={!!user}
-            onCommentAdded={(comment) => setComments([comment, ...comments])}
+            onCommentAdded={() => {}}
           />
         </div>
 
         <div className="space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Route Details</h2>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance</h3>
-                <p className="text-lg text-gray-900 dark:text-white">{formatDistance(route.distance, distanceUnit)}</p>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance</h3>
+                  <p className="text-lg text-gray-900 dark:text-white">{formatDistance(route.distance, distanceUnit)}</p>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
+                  <p className="text-lg text-gray-900 dark:text-white">{route.duration}</p>
+                </div>
               </div>
-              <div className="text-center">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
-                <p className="text-lg text-gray-900 dark:text-white">{route.duration}</p>
-              </div>
+              
               {distanceToStart !== null && (
                 <div className="text-center col-span-2">
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Distance from You</h3>
@@ -419,6 +363,33 @@ export function RouteDetails() {
                 </div>
               )}
             </div>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div className="grid grid-cols-1 gap-2 mb-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Start Point</h3>
+                    <a
+                      href={`https://www.google.com/maps?q=${startCoords[1]},${startCoords[0]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                    >
+                      {startCoords[1].toFixed(6)}°N, {startCoords[0].toFixed(6)}°E
+                    </a>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">End Point</h3>
+                    <a
+                      href={`https://www.google.com/maps?q=${endCoords[1]},${endCoords[0]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                    >
+                      {endCoords[1].toFixed(6)}°N, {endCoords[0].toFixed(6)}°E
+                    </a>
+                  </div>
+                </div>
+            </div>
+ 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               {routeCreator && (
                 <div className="flex items-center mb-3">
