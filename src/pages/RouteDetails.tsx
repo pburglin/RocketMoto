@@ -42,6 +42,7 @@ export function RouteDetails() {
   const { currentLocation } = useLocation();
   const [reportExpanded, setReportExpanded] = useState(false);
   const [reportDetails, setReportDetails] = useState('');
+  const [reportStatus, setReportStatus] = useState<'success' | 'error' | null>(null);
 
   async function handleSubmitReport() {
     if (!user || !id) return;
@@ -57,12 +58,16 @@ export function RouteDetails() {
 
       if (error) throw error;
 
-      alert('Report submitted successfully!');
+      setReportStatus('success');
       setReportExpanded(false);
       setReportDetails('');
     } catch (err) {
       console.error('Error submitting report:', err);
-      alert('Failed to submit report. Please try again.');
+      setReportStatus('error');
+    } finally {
+      setTimeout(() => {
+        setReportStatus(null);
+      }, 3000);
     }
   }
   const [route, setRoute] = useState<RouteData | null>(null);
@@ -490,6 +495,20 @@ export function RouteDetails() {
             )}
             {/* End Report Section */}
           </div>
+          {reportStatus && (
+            <div className={`mb-6 ${reportStatus === 'success' ? 'bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-600 text-green-800 dark:text-green-200' : 'bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-600 text-red-800 dark:text-red-200'} rounded-lg p-4`}>
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Camera className={`h-5 w-5 ${reportStatus === 'success' ? 'text-green-400' : 'text-red-400'}`} aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium">
+                    {reportStatus === 'success' ? 'Report submitted successfully!' : 'Failed to submit report. Please try again.'}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
