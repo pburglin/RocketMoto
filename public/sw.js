@@ -3,7 +3,7 @@ const STATIC_CACHE_NAME = 'rocketmoto-static-v1';
 
 // Static assets that can be cached longer
 const staticUrlsToCache = [
-  '/icon.svg',
+  '/icon.png',
   '/manifest.json'
 ];
 

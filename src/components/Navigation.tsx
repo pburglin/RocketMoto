@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Recycle as Motorcycle, Map, User, Plus, Bookmark, Download } from 'lucide-react';
+import { Recycle as Motorcycle, Map, User, Plus, Bookmark } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { useAuth } from '../lib/auth';
 
@@ -14,10 +14,10 @@ export function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
-              <Link to="/" className="flex items-center">
-                <Motorcycle className="h-8 w-8 text-indigo-600" />
+                <Link to="/" className="flex items-center">
+                <img src="/icon.png" className="h-16 w-16 rounded-full" />
                 <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">RocketMoto.US</span>
-              </Link>
+                </Link>
             </div>
             
             <div className="flex items-center space-x-4">
