@@ -19,7 +19,7 @@ export function Home() {
     async function fetchRoutes() {
       const userLat = currentLocation?.lat || parseFloat(profile?.location?.split(',')[0] || '40.7128');
       const userLng = currentLocation?.lng || parseFloat(profile?.location?.split(',')[1] || '-74.0060');
-      const maxDistance = 100; // 100km radius
+      const maxDistance = 62; // ~62 miles (100km) radius for consistency with new default miles unit
 
       try {
         // First get routes within distance

@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
-  const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('km');
+  const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('mi');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
