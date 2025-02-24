@@ -20,8 +20,9 @@ export function Footer() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link 
+                <Link
                   to="/faq"
+                  onClick={() => window.scrollTo(0, 0)}
                   className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center"
                 >
                   <HelpCircle className="h-5 w-5 mr-2" />
