@@ -41,7 +41,7 @@ export function SearchResults() {
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sortBy, setSortBy] = useState<'distance' | 'routeDistance' | 'relevance' | 'popularity' | 'created_at'>('distance');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [hideCompleted, setHideCompleted] = useState(searchParams.get('hideCompleted') === 'true');
 
 
   useEffect(() => {
@@ -115,7 +115,20 @@ export function SearchResults() {
           }
         }
       }
-
+ 
+      // Filter out completed routes if hideCompleted is true and user is logged in
+      if (hideCompleted && profile?.id) {
+        const { data: completedRouteIds } = await supabase
+          .from('completed_routes')
+          .select('route_id')
+          .eq('user_id', profile.id);
+        
+        if (completedRouteIds && completedRouteIds.length > 0) {
+          const ids = completedRouteIds.map(r => r.route_id);
+          query = query.not('id', 'in', `(${ids.join(',')})`);
+        }
+      }
+ 
       const { data, error } = await query
         .range(0, ROUTES_PER_PAGE - 1);
       
@@ -167,7 +180,7 @@ export function SearchResults() {
     }
 
     fetchRoutes();
-  }, [searchTerm, selectedTags, maxDistance, maxRouteDistance, sortBy, currentLocation, profile?.location]);
+  }, [searchTerm, selectedTags, maxDistance, maxRouteDistance, sortBy, currentLocation, profile?.location, hideCompleted, profile?.id]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -176,6 +189,7 @@ export function SearchResults() {
     if (maxDistance) params.set('maxDistance', maxDistance);
     if (maxRouteDistance) params.set('maxRouteDistance', maxRouteDistance);
     if (sortBy !== 'relevance') params.set('sort', sortBy);
+    if (hideCompleted) params.set('hideCompleted', 'true');
     selectedTags.forEach(tag => params.append('tags', tag));
     setSearchParams(params);
   }, [searchTerm, maxDistance, maxRouteDistance, selectedTags, sortBy, setSearchParams]);
@@ -257,6 +271,19 @@ export function SearchResults() {
       }
     }
 
+    // Filter out completed routes if hideCompleted is true and user is logged in
+    if (hideCompleted && profile?.id) {
+      const { data: completedRouteIds } = await supabase
+        .from('completed_routes')
+        .select('route_id')
+        .eq('user_id', profile.id);
+      
+      if (completedRouteIds && completedRouteIds.length > 0) {
+        const ids = completedRouteIds.map(r => r.route_id);
+        query = query.not('id', 'in', `(${ids.join(',')})`);
+      }
+    }
+
     const { data, error } = await query
       .range(startIndex, startIndex + ROUTES_PER_PAGE - 1);
     
@@ -327,11 +354,12 @@ export function SearchResults() {
     setMaxRouteDistance('');
     setSelectedTags(new Set());
     setSortBy('relevance');
+    setHideCompleted(false);
   }
 
   const hasActiveFilters = useMemo(() => {
-    return searchTerm || maxDistance || maxRouteDistance || selectedTags.size > 0 || sortBy !== 'relevance';
-  }, [searchTerm, maxDistance, maxRouteDistance, selectedTags, sortBy]);
+    return searchTerm || maxDistance || maxRouteDistance || selectedTags.size > 0 || sortBy !== 'relevance' || hideCompleted;
+  }, [searchTerm, maxDistance, maxRouteDistance, selectedTags, sortBy, hideCompleted]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -401,6 +429,19 @@ export function SearchResults() {
                   />
                 </div>
               </div>
+              {profile && (
+                <div className="mt-4">
+                  <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={hideCompleted}
+                      onChange={(e) => setHideCompleted(e.target.checked)}
+                      className="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 h-4 w-4 mr-2"
+                    />
+                    Hide completed routes
+                  </label>
+                </div>
+              )}
             </div>
 
             <div>
