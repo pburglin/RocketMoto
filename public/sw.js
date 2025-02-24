@@ -1,5 +1,5 @@
-const CACHE_NAME = 'rocketmoto-v1';
-const STATIC_CACHE_NAME = 'rocketmoto-static-v1';
+const CACHE_NAME = 'rocketmoto-v2';
+const STATIC_CACHE_NAME = 'rocketmoto-static-v2';
 
 // Static assets that can be cached longer
 const staticUrlsToCache = [
@@ -58,8 +58,8 @@ self.addEventListener('fetch', (event) => {
         // Clone the response
         const responseToCache = response.clone();
 
-        // Only cache successful GET responses
-        if (response.ok) {
+        // Only cache complete successful GET responses (status 200)
+        if (response.status === 200) {
           caches.open(CACHE_NAME)
             .then((cache) => {
               // Add no-cache header to dynamic content
@@ -76,6 +76,9 @@ self.addEventListener('fetch', (event) => {
               );
               
               cache.put(event.request, responseWithHeaders);
+            })
+            .catch(error => {
+              console.error('Cache error:', error);
             });
         }
 

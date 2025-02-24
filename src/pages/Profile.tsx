@@ -407,14 +407,21 @@ export function Profile() {
 
   async function handleSignOut() {
     try {
-      await signOut();
+      // Start the sign out process
+      signOut().catch(console.error);
+      // Navigate immediately - don't wait for the sign out to complete
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error during sign out:', error);
+      // If navigation fails, force reload the page
+      window.location.href = '/';
     }
   }
 
   function formatLocation() {
+    // We know profile is not null here because of the check at line 404
+    const profileData = profile!;
+    
     if (addressLoading) {
       return (
         <span className="text-gray-500">
@@ -423,7 +430,7 @@ export function Profile() {
       );
     }
     
-    if (!profile.location) {
+    if (!profileData.location) {
       return (
         <span className="text-gray-500">
           No location set
@@ -435,7 +442,7 @@ export function Profile() {
       return (
         <span className="text-gray-500">
           <span className="font-medium">Coordinates:</span>{' '}
-          {profile.location}
+          {profileData.location}
         </span>
       );
     }
@@ -446,7 +453,7 @@ export function Profile() {
           {address}
         </span>
         <span className="text-sm block">
-          ({profile.location})
+          ({profileData.location})
         </span>
       </div>
     );

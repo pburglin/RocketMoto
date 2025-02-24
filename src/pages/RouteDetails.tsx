@@ -18,6 +18,7 @@ type RoutePhoto = {
   photo_blob: string | null;
   caption: string;
   order: number;
+  created_at: string;
 };
 
 type RouteData = {
@@ -492,6 +493,13 @@ export function RouteDetails() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+            {!user && (
+              <div className="text-sm text-gray-600 dark:text-gray-300">
+                <p>
+                  Sign in to report route for review.
+                </p>
               </div>
             )}
             {/* End Report Section */}
