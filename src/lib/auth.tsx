@@ -90,8 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    // Let Supabase handle the session check internally
+    await supabase.auth.signOut();
+    // Local state will be cleared by the onAuthStateChange event handler
   }
 
   useEffect(() => {

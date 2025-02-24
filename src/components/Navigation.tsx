@@ -15,7 +15,7 @@ export function Navigation() {
           <div className="flex justify-between h-16">
             <div className="flex">
                 <Link to="/" className="flex items-center">
-                <img src="/icon.png" className="h-16 w-16 rounded-full" />
+                <img src="/icon.png" className="h-12 w-12" />
                 <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">RocketMoto.US</span>
                 </Link>
             </div>

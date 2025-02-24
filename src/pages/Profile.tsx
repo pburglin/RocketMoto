@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Settings, MapPin, LogOut, CheckCircle, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { useNavigate, Link } from 'react-router-dom';
 import { RouteCard, Route } from '../components/RouteCard';
 import { EditProfileModal } from '../components/EditProfileModal';
 
@@ -42,10 +42,45 @@ const ROUTES_PER_PAGE = 6;
 const HISTORY_PER_PAGE = 5;
 
 export function Profile() {
-  const { user, profile, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loadingMoreRoutes, setLoadingMoreRoutes] = useState(false);
+
+  async function handleSignOut() {
+    try {
+      // First remove Supabase auth token
+      localStorage.removeItem('sb-auth-token');
+      
+      // Clear all storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+
+      // Remove all cookies
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
+      // Clear service worker caches
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(
+          cacheKeys.map(key => caches.delete(key))
+        );
+      }
+
+      // Force a complete refresh to clear React state and redirect
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // If error occurs, force a hard reload
+      window.location.reload();
+    }
+  }
   const [hasMoreRoutes, setHasMoreRoutes] = useState(true);
   const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
@@ -403,19 +438,6 @@ export function Profile() {
 
   if (!user || !profile) {
     return null;
-  }
-
-  async function handleSignOut() {
-    try {
-      // Start the sign out process
-      signOut().catch(console.error);
-      // Navigate immediately - don't wait for the sign out to complete
-      navigate('/');
-    } catch (error) {
-      console.error('Error during sign out:', error);
-      // If navigation fails, force reload the page
-      window.location.href = '/';
-    }
   }
 
   function formatLocation() {

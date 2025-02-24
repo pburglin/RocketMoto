@@ -496,7 +496,7 @@ export function RouteDetails() {
               </div>
             )}
             {!user && (
-              <div className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="text-sm text-center text-gray-600 dark:text-gray-300">
                 <p>
                   Sign in to report route for review.
                 </p>
