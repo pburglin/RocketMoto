@@ -2,14 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from './auth';
 import { supabase } from './supabase';
 
-// Script to be injected into the document head
-const themeScript = `
-  try {
-    const theme = localStorage.getItem('theme') || 'light';
-    document.documentElement.classList.toggle('dark', theme === 'dark');
-  } catch (e) {}
-`;
-
 type Theme = 'light' | 'dark';
 
 type ThemeContextType = {
@@ -25,11 +17,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Add theme script to head
-    const script = document.createElement('script');
-    script.textContent = themeScript;
-    document.head.appendChild(script);
-
     // Initialize theme from local storage or profile
     try {
       const storedTheme = localStorage.getItem('theme');
