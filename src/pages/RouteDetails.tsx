@@ -522,7 +522,7 @@ export function RouteDetails() {
                 )}
               </div>
             ) : (
-              <div className="text-sm text-center text-gray-600 dark:text-gray-300">
+              <div className="text-sm text-center text-gray-500 dark:text-gray-400">
                 <p>Sign in to report route for review.</p>
               </div>
             )}
