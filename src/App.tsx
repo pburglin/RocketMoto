@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Navigation } from './components/Navigation';
+import { AdsenseScript } from './components/AdsenseScript';
 import { Home } from './pages/Home';
 import { SearchResults } from './pages/SearchResults';
 import { RouteDetails } from './pages/RouteDetails';
@@ -17,6 +18,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
+        <AdsenseScript />
         <Navigation />
         <main className="flex-grow">
           <Routes>

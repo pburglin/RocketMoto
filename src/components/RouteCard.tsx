@@ -29,7 +29,7 @@ type RouteCardProps = {
   showEdit?: boolean;
 };
 
-const DEFAULT_PHOTO = 'https://source.unsplash.com/random/800x600?road,motorcycle';
+const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1599280137962-a457e2931656';
 
 export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { user } = useAuth();

@@ -19,7 +19,7 @@ type RoutePhotosProps = {
   onPhotosUpdated: (photos: RoutePhoto[]) => void;
 };
 
-const DEFAULT_PHOTO = 'https://source.unsplash.com/random/800x600?road,motorcycle';
+const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1599280137962-a457e2931656';
 
 export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: RoutePhotosProps) {
   const [showPhotoForm, setShowPhotoForm] = useState(false);
