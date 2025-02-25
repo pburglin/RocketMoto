@@ -193,12 +193,12 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
             .sort((a, b) => {
               const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
               const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
-              console.log('created_at:', a.created_at, b.created_at);
+              //console.log('created_at:', a.created_at, b.created_at);
               return dateB.getTime() - dateA.getTime();
             })
             .slice(0, 4)
             .map((photo, index) => {
-              console.log('created_at:', photo.created_at);
+              //console.log('created_at:', photo.created_at);
               return (
                 <div key={photo.id} className="relative cursor-pointer" onClick={() => {
                   setSelectedPhotoIndex(index);

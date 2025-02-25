@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
 import { Camera } from 'lucide-react';
-import { RouteMap } from '../components/route/RouteMap';
-import { RoutePhotos } from '../components/route/RoutePhotos';
-import { RouteComments } from '../components/route/RouteComments';
-import { RouteActions } from '../components/route/RouteActions';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useRating } from '../lib/useRating';
@@ -11,7 +7,12 @@ import { useBookmark } from '../lib/useBookmark';
 import { useLocation } from '../lib/location';
 import { formatDistance, formatDate, formatDuration } from '../lib/utils';
 import { supabase } from '../lib/supabase';
+import { RoutePhotos } from '../components/route/RoutePhotos';
+import { RouteComments } from '../components/route/RouteComments';
+import { RouteActions } from '../components/route/RouteActions';
+import { User } from '@supabase/supabase-js';
 
+// Types
 type RoutePhoto = {
   id: string;
   photo_url: string;
@@ -37,128 +38,82 @@ type RouteData = {
   route_tags?: { tag: string }[];
 };
 
-export function RouteDetails() {
-  const { id } = useParams<{ id: string }>();
-  const { user, distanceUnit } = useAuth();
-  const { currentLocation } = useLocation();
-  const [reportExpanded, setReportExpanded] = useState(false);
-  const [reportDetails, setReportDetails] = useState('');
-  const [reportStatus, setReportStatus] = useState<'success' | 'error' | null>(null);
-
-  async function handleSubmitReport() {
-    if (!user || !id) return;
-
-    try {
-      const { error } = await supabase.from('route_reports').insert([
-        {
-          route_id: id,
-          user_id: user.id,
-          details: reportDetails,
-        },
-      ]);
-
-      if (error) throw error;
-
-      setReportStatus('success');
-      setReportExpanded(false);
-      setReportDetails('');
-    } catch (err) {
-      console.error('Error submitting report:', err);
-      setReportStatus('error');
-    } finally {
-      setTimeout(() => {
-        setReportStatus(null);
-      }, 3000);
-    }
+// Error Boundary for map component
+class MapErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
   }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-[400px] rounded-lg overflow-hidden shadow-lg relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <p className="text-gray-500 dark:text-gray-400">Failed to load map. Please refresh the page.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Lazy load the map component since it's heavy and not immediately visible
+const RouteMap = React.lazy(() => import('../components/route/RouteMap').then(module => ({
+  default: module.RouteMap
+})));
+
+// Custom hook for route data fetching
+function useRouteData(id: string | undefined, user: User | null) {
   const [route, setRoute] = useState<RouteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
-  const { userRating, upvotes, downvotes, rateRoute, loading: ratingLoading, error: ratingError } = useRating(id || '');
-  const [isCompleted, setIsCompleted] = useState(false);
-  const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
-  const [completingRoute, setCompletingRoute] = useState(false);
-  const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
   const [routeCreator, setRouteCreator] = useState<{ username: string; avatar_url: string } | null>(null);
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
-  const [showNewRouteAlert, setShowNewRouteAlert] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
-    // Check if we should show the new route alert
-    const shouldShowAlert = sessionStorage.getItem('showNewRouteAlert') === 'true';
-    if (shouldShowAlert) {
-      setShowNewRouteAlert(true);
-      sessionStorage.removeItem('showNewRouteAlert');
-    }
-
-    async function fetchRouteAndComments() {
+    async function fetchRouteData() {
       if (!id) return;
 
-      // Fetch bookmark and completion counts
-      const { count: bookmarks } = await supabase
-        .from('route_bookmarks')
-        .select('*', { count: 'exact' })
-        .eq('route_id', id);
-
-      setBookmarkCount(bookmarks || 0);
-
-      const { count: completed } = await supabase
-        .from('completed_routes')
-        .select('*', { count: 'exact' })
-        .eq('route_id', id);
-
-      setCompletedCount(completed || 0);
-
-      // Check if route is completed by user
-      if (user) {
-        const { data: completedRoute } = await supabase
-          .from('completed_routes')
-          .select('id')
-          .eq('route_id', id)
-          .eq('user_id', user.id)
-          .single();
-
-        setIsCompleted(!!completedRoute);
-      }
-
       try {
-        // Fetch route details
-        const { data: routeData, error: routeError } = await supabase
-          .from('routes')
-          .select(`
+        // Fetch all data in parallel
+        const [bookmarksData, completedData, routeData, completedRouteData] = await Promise.all([
+          supabase.from('route_bookmarks').select('*', { count: 'exact' }).eq('route_id', id),
+          supabase.from('completed_routes').select('*', { count: 'exact' }).eq('route_id', id),
+          supabase.from('routes').select(`
             *,
-            route_tags (
-              tag
-            ),
-            route_photos (
-              id,
-              photo_url,
-              photo_blob,
-              caption,
-              order,
-              created_at
-            )
-          `)
-          .eq('id', id)
-          .single();
+            route_tags (tag),
+            route_photos (id, photo_url, photo_blob, caption, order, created_at)
+          `).eq('id', id).single(),
+          user ? supabase.from('completed_routes').select('id').eq('route_id', id).eq('user_id', user.id).single() : null
+        ]);
 
-        if (routeError) throw routeError;
-        setRoute(routeData);
-
-        // Fetch route creator details
-        const { data: creator } = await supabase
-          .from('users')
-          .select('username, avatar_url')
-          .eq('id', routeData.created_by)
-          .single();
+        setBookmarkCount(bookmarksData.count || 0);
+        setCompletedCount(completedData.count || 0);
         
-        if (creator) {
-          setRouteCreator(creator);
+        if (routeData.error) throw routeData.error;
+        setRoute(routeData.data);
+
+        // Fetch creator details only if we have route data
+        if (routeData.data) {
+          const { data: creator } = await supabase
+            .from('users')
+            .select('username, avatar_url')
+            .eq('id', routeData.data.created_by)
+            .single();
+          
+          if (creator) {
+            setRouteCreator(creator);
+          }
         }
 
-        // Comments are now handled by the RouteComments component
+        setIsCompleted(!!completedRouteData?.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load route details');
       } finally {
@@ -166,14 +121,69 @@ export function RouteDetails() {
       }
     }
 
-    async function initialize() {
-      await fetchRouteAndComments();
+    fetchRouteData();
+  }, [id, user]);
+
+  return { route, loading, error, routeCreator, bookmarkCount, completedCount, isCompleted, setRoute, setIsCompleted };
+}
+
+export function RouteDetails() {
+  const { id } = useParams<{ id: string }>();
+  const { user, distanceUnit } = useAuth();
+  const { currentLocation } = useLocation();
+  const [reportExpanded, setReportExpanded] = useState(false);
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportStatus, setReportStatus] = useState<'success' | 'error' | null>(null);
+  const [showNewRouteAlert, setShowNewRouteAlert] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  // Use custom hook for route data
+  const {
+    route,
+    loading,
+    error,
+    routeCreator,
+    bookmarkCount,
+    completedCount,
+    isCompleted,
+    setRoute,
+    setIsCompleted
+  } = useRouteData(id, user);
+
+  // Rating and bookmark hooks
+  const { userRating, upvotes, downvotes, rateRoute, loading: ratingLoading, error: ratingError } = useRating(id || '');
+  const { isBookmarked, loading: bookmarkLoading, error: bookmarkError, toggleBookmark } = useBookmark(id || '');
+  const [completingRoute, setCompletingRoute] = useState(false);
+  const [distanceToStart, setDistanceToStart] = useState<number | null>(null);
+
+  // Check for new route alert
+  useEffect(() => {
+    const shouldShowAlert = sessionStorage.getItem('showNewRouteAlert') === 'true';
+    if (shouldShowAlert) {
+      setShowNewRouteAlert(true);
+      sessionStorage.removeItem('showNewRouteAlert');
+    }
+  }, []);
+
+  // Memoize coordinates calculations
+  const { startPoint, endPoint, startCoords, endCoords } = useMemo(() => {
+    if (!route?.start_point || !route?.end_point) {
+      return { startPoint: null, endPoint: null, startCoords: null, endCoords: null };
     }
 
-    initialize();
-  }, [id]);
+    const startCoords = route.start_point.coordinates;
+    const endCoords = route.end_point.coordinates;
+    
+    // PostGIS returns coordinates in [longitude, latitude] format, swap them for Leaflet
+    return {
+      startPoint: [startCoords[1], startCoords[0]] as [number, number],
+      endPoint: [endCoords[1], endCoords[0]] as [number, number],
+      startCoords,
+      endCoords
+    };
+  }, [route]);
 
-  // Calculate distance to start point when location or route changes
+  // Calculate distance to start point
   useEffect(() => {
     async function calculateDistance() {
       if (!currentLocation || !route?.start_point) return;
@@ -197,31 +207,52 @@ export function RouteDetails() {
     calculateDistance();
   }, [currentLocation, route]);
 
-  function handleNavigate(type: 'start' | 'end') {
-    if (!route) return;
+  // Memoize handlers
+  const handleSubmitReport = useCallback(async () => {
+    if (!user || !id) return;
+
+    try {
+      const { error: submitError } = await supabase.from('route_reports').insert([
+        {
+          route_id: id,
+          user_id: user.id,
+          details: reportDetails,
+        },
+      ]);
+
+      if (submitError) throw submitError;
+
+      setReportStatus('success');
+      setReportExpanded(false);
+      setReportDetails('');
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      setReportStatus('error');
+    } finally {
+      setTimeout(() => setReportStatus(null), 3000);
+    }
+  }, [user, id, reportDetails]);
+
+  const handleNavigate = useCallback((type: 'start' | 'end') => {
+    if (!route || !startCoords || !endCoords) return;
     
     const coords = type === 'start' ? startCoords : endCoords;
     const destination = `${coords[1]},${coords[0]}`; // Latitude,Longitude format
     
-    // If we have current location, use it as the starting point
     const origin = currentLocation 
       ? `${currentLocation.lat},${currentLocation.lng}`
-      : 'current+location'; // Let maps app use device location
+      : 'current+location';
     
-    // Create maps URL (compatible with both Google Maps and Apple Maps)
     const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
-    
-    // Open in new tab
     window.open(url, '_blank');
-  }
+  }, [route, startCoords, endCoords, currentLocation]);
 
-  async function handleToggleCompleted() {
+  const handleToggleCompleted = useCallback(async () => {
     if (!user || !route) return;
     
     setCompletingRoute(true);
     try {
       if (isCompleted) {
-        // Remove from completed routes
         const { error } = await supabase
           .from('completed_routes')
           .delete()
@@ -231,7 +262,6 @@ export function RouteDetails() {
         if (error) throw error;
         setIsCompleted(false);
       } else {
-        // Add to completed routes
         const { error } = await supabase
           .from('completed_routes')
           .insert([{
@@ -247,7 +277,13 @@ export function RouteDetails() {
     } finally {
       setCompletingRoute(false);
     }
-  }
+  }, [user, route, isCompleted, setIsCompleted]);
+
+  const handlePhotosUpdated = useCallback((photos: RoutePhoto[]) => {
+    if (route) {
+      setRoute({ ...route, route_photos: photos });
+    }
+  }, [route, setRoute]);
 
   if (loading) {
     return (
@@ -257,32 +293,15 @@ export function RouteDetails() {
     );
   }
 
-  if (!route) {
+  if (!route || !startPoint || !endPoint) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center text-red-600">
-          {error || 'Route not found'}
+          {error || 'Route not found or has invalid coordinates'}
         </div>
       </div>
     );
   }
-
-  // Parse start and end points from PostGIS POINT format
-  // PostGIS returns coordinates as an object with coordinates array
-  const startCoords = route.start_point.coordinates;
-  const endCoords = route.end_point.coordinates;
-  
-  if (!startCoords || !endCoords) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="text-center text-red-600">Invalid route coordinates</div>
-      </div>
-    );
-  }
-
-  // PostGIS returns coordinates in [longitude, latitude] format, we need to swap them for Leaflet
-  const startPoint: [number, number] = [startCoords[1], startCoords[0]];
-  const endPoint: [number, number] = [endCoords[1], endCoords[0]];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -357,12 +376,20 @@ export function RouteDetails() {
             />
           </div>
 
-          <RouteMap
-            startPoint={startPoint}
-            endPoint={endPoint}
-            currentLocation={currentLocation ? [currentLocation.lat, currentLocation.lng] : null}
-            onMapInstance={() => {}}
-          />
+          <MapErrorBoundary>
+            <Suspense fallback={
+              <div className="h-[400px] rounded-lg overflow-hidden shadow-lg relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400">Loading map...</p>
+              </div>
+            }>
+              <RouteMap
+                startPoint={startPoint}
+                endPoint={endPoint}
+                currentLocation={currentLocation ? [currentLocation.lat, currentLocation.lng] : null}
+                onMapInstance={() => {}}
+              />
+            </Suspense>
+          </MapErrorBoundary>
 
           <RouteComments
             routeId={route.id}
@@ -396,32 +423,32 @@ export function RouteDetails() {
               )}
             </div>
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div className="grid grid-cols-1 gap-2 mb-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Start Point</h3>
-                    <a
-                      href={`https://www.google.com/maps?q=${startCoords[1]},${startCoords[0]}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
-                    >
-                      {startCoords[1].toFixed(6)}°N, {startCoords[0].toFixed(6)}°E
-                    </a>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">End Point</h3>
-                    <a
-                      href={`https://www.google.com/maps?q=${endCoords[1]},${endCoords[0]}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
-                    >
-                      {endCoords[1].toFixed(6)}°N, {endCoords[0].toFixed(6)}°E
-                    </a>
-                  </div>
+              <div className="grid grid-cols-1 gap-2 mb-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Start Point</h3>
+                  <a
+                    href={`https://www.google.com/maps?q=${startCoords[1]},${startCoords[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                  >
+                    {startCoords[1].toFixed(6)}°N, {startCoords[0].toFixed(6)}°E
+                  </a>
                 </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">End Point</h3>
+                  <a
+                    href={`https://www.google.com/maps?q=${endCoords[1]},${endCoords[0]}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                  >
+                    {endCoords[1].toFixed(6)}°N, {endCoords[0].toFixed(6)}°E
+                  </a>
+                </div>
+              </div>
             </div>
- 
+
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               {routeCreator && (
                 <div className="flex items-center mb-3">
@@ -456,12 +483,12 @@ export function RouteDetails() {
             routeId={route.id}
             photos={route.route_photos || []}
             isOwner={user?.id === route.created_by}
-            onPhotosUpdated={(photos) => setRoute({ ...route, route_photos: photos })}
+            onPhotosUpdated={handlePhotosUpdated}
           />
+
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Report Route</h2>
-            {/* Report Section */}
-            {user && (
+            {user ? (
               <div className="mb-4">
                 <button
                   onClick={() => setReportExpanded(!reportExpanded)}
@@ -494,16 +521,13 @@ export function RouteDetails() {
                   </div>
                 )}
               </div>
-            )}
-            {!user && (
+            ) : (
               <div className="text-sm text-center text-gray-600 dark:text-gray-300">
-                <p>
-                  Sign in to report route for review.
-                </p>
+                <p>Sign in to report route for review.</p>
               </div>
             )}
-            {/* End Report Section */}
           </div>
+
           {reportStatus && (
             <div className={`mb-6 ${reportStatus === 'success' ? 'bg-green-50 dark:bg-green-900/30 border border-green-300 dark:border-green-600 text-green-800 dark:text-green-200' : 'bg-red-50 dark:bg-red-900/30 border border-red-300 dark:border-red-600 text-red-800 dark:text-red-200'} rounded-lg p-4`}>
               <div className="flex">

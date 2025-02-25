@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, AlertCircle } from 'lucide-react';
+import { MessageSquare, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 type Comment = {
@@ -10,7 +10,7 @@ type Comment = {
   user: {
     username: string;
     avatar_url: string;
-  };
+  } | null;
 };
 
 type RouteCommentsProps = {
@@ -19,11 +19,12 @@ type RouteCommentsProps = {
   onCommentAdded: (comment: Comment) => void;
 };
 
+const DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+
 export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: RouteCommentsProps) {
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -86,15 +87,26 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
     setCommentError(null);
 
     try {
-      const { data: comment, error } = await supabase
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!userData.user) throw new Error('Not authenticated');
+
+      // First insert the comment
+      const { error: insertError } = await supabase
         .from('route_comments')
         .insert([
           {
             route_id: routeId,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            user_id: userData.user.id,
             content: newComment.trim()
           }
-        ])
+        ]);
+
+      if (insertError) throw insertError;
+
+      // Then fetch the comment with user data
+      const { data: comment, error: selectError } = await supabase
+        .from('route_comments')
         .select(`
           *,
           user:users (
@@ -102,14 +114,22 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
             avatar_url
           )
         `)
+        .eq('route_id', routeId)
+        .eq('user_id', userData.user.id)
+        .eq('content', newComment.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
-      if (error) throw error;
+      if (selectError) throw selectError;
       
-      setComments(prev => [comment, ...prev]);
-      setTotalComments(prev => prev + 1);
-      onCommentAdded(comment);
-      setNewComment('');
+      if (comment) {
+        // Add the new comment to the start of the array
+        setComments(prev => [comment, ...prev]);
+        setTotalComments(prev => prev + 1);
+        onCommentAdded(comment);
+        setNewComment('');
+      }
     } catch (err) {
       setCommentError(err instanceof Error ? err.message : 'Failed to post comment');
     } finally {
@@ -130,13 +150,25 @@ export function RouteComments({ routeId, isAuthenticated, onCommentAdded }: Rout
         {comments.map((comment) => (
           <div key={comment.id} className="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
             <div className="flex items-center mb-2">
-              <img
-                src={comment.user.avatar_url}
-                alt="User avatar"
-                className="h-10 w-10 rounded-full mr-3"
-              />
+              {comment.user ? (
+                <img
+                  src={comment.user.avatar_url || DEFAULT_AVATAR}
+                  alt={`${comment.user.username}'s avatar`}
+                  className="h-10 w-10 rounded-full mr-3 bg-gray-100 dark:bg-gray-700"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = DEFAULT_AVATAR;
+                  }}
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                  <User className="h-6 w-6 text-gray-400" />
+                </div>
+              )}
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">{comment.user.username}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white">
+                  {comment.user?.username || 'Deleted User'}
+                </h3>
                 <p className="text-sm text-gray-500">
                   {new Date(comment.created_at).toLocaleDateString()}
                 </p>
