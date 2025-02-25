@@ -234,6 +234,33 @@ export function FAQ() {
           </div>
         </section>
 
+        <section>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Other Questions</h2>
+          
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <Flag className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">English is not my main language. Can I use the site in other languages?</h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Sure thing, if you want to find epic routes but prefer to review the content in a different language.
+                    Most modern browsers present option to translate the content from English to your primary language. For example:
+                  </p>
+                  <br/>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    In Chrome, if you do not see the option you can manually request translation by right-clicking on the page and selecting "Translate to [Your Language]".
+                  </p>
+                  <br/>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    In Safari, you can find the translation option in the "View" menu.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-6">
           <h2 className="text-lg font-medium text-indigo-900 dark:text-indigo-100 mb-2">Need more help?</h2>
           <p className="text-indigo-700 dark:text-indigo-300">
