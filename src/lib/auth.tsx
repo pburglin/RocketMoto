@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { generateRandomColorImage } from './utils';
+
+type UserProfile = {
+  id: string;
+  username: string;
+  avatar_url: string;
+  distance_unit?: 'km' | 'mi';
+  location?: string;
+};
 
 type AuthContextType = {
   user: User | null;
-  profile: any | null;
+  profile: UserProfile | null;
   distanceUnit: 'km' | 'mi';
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
@@ -16,7 +25,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [distanceUnit, setDistanceUnit] = useState<'km' | 'mi'>('mi');
   const [loading, setLoading] = useState(true);
 
@@ -81,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           {
             id: data.user.id,
             username,
-            avatar_url: `https://source.unsplash.com/random/200x200?face&u=${data.user.id}`,
+            avatar_url: generateRandomColorImage(),
           },
         ]);
 

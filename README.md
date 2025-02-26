@@ -88,4 +88,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - OpenStreetMap for map data
 - Leaflet for map visualization
 - Supabase for backend infrastructure
-- Unsplash for default route images

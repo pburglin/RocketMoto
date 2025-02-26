@@ -1,3 +1,25 @@
+// Generate a data URL for a random solid color image
+export function generateRandomColorImage(): string {
+  // Generate a random color in HSL to ensure good visibility
+  const hue = Math.floor(Math.random() * 360);
+  const saturation = 60 + Math.floor(Math.random() * 20); // 60-80%
+  const lightness = 45 + Math.floor(Math.random() * 20); // 45-65%
+  
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 400;
+  
+  // Get the context and draw the background
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  
+  ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  return canvas.toDataURL('image/png');
+}
+
 // Convert kilometers to miles
 export function kmToMiles(km: number): number {
   return km * 0.621371;

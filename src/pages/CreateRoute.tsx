@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import L, { Icon } from 'leaflet';
 import 'leaflet-routing-machine';
-import { Camera, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Clock, Route } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -11,15 +11,7 @@ import { supabase } from '../lib/supabase';
 import 'leaflet/dist/leaflet.css';
 import { formatDistance } from '../lib/utils';
 
-const defaultIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-// Custom icons for different marker types
+// Custom icons for route markers
 const startIcon = new Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
   iconRetinaUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -47,13 +39,13 @@ function RoutingMachine({
   onRouteCalculated: (distance: number, duration: string) => void;
 }) {
   const map = useMap();
-  const routingRef = React.useRef<any>(null);
+  const routingRef = React.useRef<L.Control | null>(null);
 
   React.useEffect(() => {
     // Clean up previous routing if it exists
     if (routingRef.current && map) {
       try {
-      map.removeControl(routingRef.current);
+        map.removeControl(routingRef.current);
       } catch (err) {
         console.warn('Error removing control:', err);
       }
@@ -61,7 +53,7 @@ function RoutingMachine({
     }
 
     if (start && end) {
-      // @ts-ignore - leaflet-routing-machine types are not available
+      // @ts-expect-error - leaflet-routing-machine types not included
       routingRef.current = L.Routing.control({
         waypoints: [
           L.latLng(start[0], start[1]),
@@ -81,7 +73,7 @@ function RoutingMachine({
         plan: false,
         itineraryFormatter: () => '',
         waypointNameFallback: () => ''
-      }).on('routesfound', function(e: any) {
+      }).on('routesfound', function(e: { routes: Array<{ summary: { totalDistance: number; totalTime: number } }> }) {
         const route = e.routes[0];
         const distanceInKm = Math.round(route.summary.totalDistance / 1000);
         const durationInMinutes = Math.round(route.summary.totalTime / 60);
@@ -90,13 +82,15 @@ function RoutingMachine({
         
         onRouteCalculated(
           distanceInKm,
-          hours > 0 
+          hours > 0
           ? `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`
           : `${minutes} minute${minutes !== 1 ? 's' : ''}`
         );
       });
 
-      routingRef.current.addTo(map);
+      if (routingRef.current) {
+        routingRef.current.addTo(map);
+      }
 
       return () => {
         if (routingRef.current && map) {
@@ -185,7 +179,8 @@ export function CreateRoute() {
       let startCoords: [number, number];
       
       if (startCoordsMatch) {
-        const [_, lat, lng] = startCoordsMatch;
+        // Destructure array skipping the full match
+        const [, lat, lng] = startCoordsMatch;
         startCoords = [parseFloat(lat), parseFloat(lng)];
       } else {
         const result = await getCoordinates(startAddress);
@@ -199,7 +194,8 @@ export function CreateRoute() {
       let endCoords: [number, number];
       
       if (endCoordsMatch) {
-        const [_, lat, lng] = endCoordsMatch;
+        // Destructure array skipping the full match
+        const [, lat, lng] = endCoordsMatch;
         endCoords = [parseFloat(lat), parseFloat(lng)];
       } else {
         const result = await getCoordinates(endAddress);
@@ -230,28 +226,55 @@ export function CreateRoute() {
     setSaveError(null);
 
     try {
-      // Insert the route
-      const { data: route, error: routeError } = await supabase
+      // Create route data
+      const routeData = {
+        title,
+        description,
+        start_point: {
+          type: "Point",
+          coordinates: [startLocation[1], startLocation[0]],
+          crs: { type: "name", properties: { name: "EPSG:4326" } }
+        },
+        end_point: {
+          type: "Point",
+          coordinates: [endLocation[1], endLocation[0]],
+          crs: { type: "name", properties: { name: "EPSG:4326" } }
+        },
+        distance: routeDistance || 0,
+        duration: routeDuration ? routeDuration.replace('Est. ', '') : '0 minutes',
+        created_by: user.id
+      };
+
+      console.log('Creating route with data:', routeData);
+
+      // Try to create the route
+      const { error: insertError } = await supabase
         .from('routes')
-        .insert([
-          {
-            title,
-            description,
-            start_point: `POINT(${startLocation[1]} ${startLocation[0]})`,
-            end_point: `POINT(${endLocation[1]} ${endLocation[0]})`,
-            distance: routeDistance || 0,
-            duration: routeDuration || '0 minutes',
-            created_by: user.id
-          }
-        ])
-        .select()
+        .insert([routeData]);
+
+      if (insertError) {
+        console.error('Route creation error:', insertError);
+        throw new Error(`Failed to create route: ${insertError.message}`);
+      }
+
+      // Fetch the newly created route
+      const { data: route, error: fetchError } = await supabase
+        .from('routes')
+        .select('*')
+        .eq('created_by', user.id)
+        .eq('title', title)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
-      if (routeError) throw routeError;
-      if (!route) throw new Error('Failed to create route');
+      if (fetchError || !route) {
+        console.error('Error fetching created route:', fetchError);
+        throw new Error('Route created but failed to fetch details');
+      }
 
-      // Navigate to the route details page
-      // Insert tags
+      console.log('Route created and fetched successfully:', route);
+
+      // Insert tags if any selected
       if (selectedTags.size > 0) {
         const { error: tagsError } = await supabase
           .from('route_tags')
@@ -262,16 +285,36 @@ export function CreateRoute() {
             }))
           );
 
-        if (tagsError) throw tagsError;
+        if (tagsError) {
+          console.error('Error creating tags:', tagsError);
+          // Don't throw error for tags - the route was created successfully
+        }
       }
 
-      // Navigate to the route details page
-      navigate(`/routes/${route.id}`);
-
-      // Store a flag in session storage to show the alert
+      console.log('Route creation completed successfully');
+      
+      // Store success flag and navigate
       sessionStorage.setItem('showNewRouteAlert', 'true');
+      navigate(`/routes/${route.id}`);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to create route');
+      console.error('Error creating route:', err);
+      
+      // Handle PostgreSQL errors
+      if (typeof err === 'object' && err !== null) {
+        const pgError = err as { code?: string; message?: string; details?: string };
+        
+        if (pgError.code === '22P02') {
+          setSaveError('Invalid data format for geographic points');
+        } else if (pgError.code === '23502') {
+          setSaveError('Missing required fields');
+        } else if (pgError.code === '23503') {
+          setSaveError('Referenced user does not exist');
+        } else {
+          setSaveError(pgError.details || pgError.message || 'Failed to create route');
+        }
+      } else {
+        setSaveError(err instanceof Error ? err.message : 'Failed to create route');
+      }
     } finally {
       setSaving(false);
     }

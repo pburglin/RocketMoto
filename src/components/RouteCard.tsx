@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth';
 import { Loader as Road, ThumbsUp, ThumbsDown, Bookmark, CrownIcon } from 'lucide-react';
 import { useBookmark } from '../lib/useBookmark';
 import { useCompletion } from '../lib/useCompletion';
-import { formatDistance, formatDuration } from '../lib/utils';
+import { formatDistance, formatDuration, generateRandomColorImage } from '../lib/utils';
 
 export type Route = {
   id: string;
@@ -29,7 +29,7 @@ type RouteCardProps = {
   showEdit?: boolean;
 };
 
-const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1599280137962-a457e2931656';
+const DEFAULT_PHOTO = generateRandomColorImage();
 
 export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { user } = useAuth();
@@ -39,7 +39,7 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { isBookmarked } = useBookmark(route.id);
   const { isCompleted } = useCompletion(route.id);
 
-  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(DEFAULT_PHOTO);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(() => generateRandomColorImage());
 
   useEffect(() => {
     function loadPhoto() {

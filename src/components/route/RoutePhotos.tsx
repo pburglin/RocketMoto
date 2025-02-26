@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Plus, Camera, Image } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PhotoGallery } from './PhotoGallery';
+import { generateRandomColorImage } from '../../lib/utils';
 
 type RoutePhoto = {
   id: string;
@@ -19,7 +20,7 @@ type RoutePhotosProps = {
   onPhotosUpdated: (photos: RoutePhoto[]) => void;
 };
 
-const DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1599280137962-a457e2931656';
+const DEFAULT_PHOTO = generateRandomColorImage();
 
 export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: RoutePhotosProps) {
   const [showPhotoForm, setShowPhotoForm] = useState(false);
@@ -41,7 +42,7 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
         Math.max(max, photo.order), -1) ?? -1;
       const nextOrder = maxOrder + 1;
 
-      let photoData: { photo_url?: string; photo_blob?: string } = {};
+      const photoData: { photo_url?: string; photo_blob?: string } = {};
 
       if (fileInputRef.current?.files?.length) {
         const file = fileInputRef.current.files[0];
