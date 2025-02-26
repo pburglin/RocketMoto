@@ -39,25 +39,28 @@ export function RouteCard({ route, showEdit = false }: RouteCardProps) {
   const { isBookmarked } = useBookmark(route.id);
   const { isCompleted } = useCompletion(route.id);
 
-  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(() => generateRandomColorImage());
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string>(DEFAULT_PHOTO);
 
   useEffect(() => {
-    function loadPhoto() {
-      if (!route.route_photos?.length) return;
-
-      const firstPhoto = route.route_photos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-      
-      if (firstPhoto.photo_url) {
-        setCoverPhotoUrl(firstPhoto.photo_url);
-      } else if (firstPhoto.photo_blob) {
-        // photo_blob should already be a complete data URL
-        setCoverPhotoUrl(firstPhoto.photo_blob);
-      } else {
-        setCoverPhotoUrl(DEFAULT_PHOTO);
-      }
+    // If no photos are available, use default
+    if (!route.route_photos?.length) {
+      setCoverPhotoUrl(DEFAULT_PHOTO);
+      return;
     }
-    
-    loadPhoto();
+
+    // Create a new array and sort by date (newest first)
+    const photos = [...route.route_photos];
+    photos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    // Use the first available photo
+    const firstPhoto = photos[0];
+    const photoUrl = firstPhoto?.photo_url || firstPhoto?.photo_blob;
+
+    if (photoUrl) {
+      setCoverPhotoUrl(photoUrl);
+    } else {
+      setCoverPhotoUrl(DEFAULT_PHOTO);
+    }
   }, [route.route_photos]);
 
   return (
