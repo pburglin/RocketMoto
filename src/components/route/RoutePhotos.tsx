@@ -16,13 +16,13 @@ type RoutePhoto = {
 type RoutePhotosProps = {
   routeId: string;
   photos: RoutePhoto[];
-  isOwner: boolean;
+  isAuthenticated: boolean;
   onPhotosUpdated: (photos: RoutePhoto[]) => void;
 };
 
 const DEFAULT_PHOTO = generateRandomColorImage();
 
-export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: RoutePhotosProps) {
+export function RoutePhotos({ routeId, photos, isAuthenticated, onPhotosUpdated }: RoutePhotosProps) {
   const [showPhotoForm, setShowPhotoForm] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoUrl, setPhotoUrl] = useState('');
@@ -119,7 +119,7 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
           {photos?.length || 0} {(photos?.length || 0) === 1 ? 'Photo' : 'Photos'}
         </h2>
-        {isOwner && !showPhotoForm && (
+        {isAuthenticated && !showPhotoForm && (
           <button
             onClick={() => setShowPhotoForm(true)}
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -129,7 +129,7 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
           </button>
         )}
       </div>
-      {isOwner && (
+      {isAuthenticated && (
         <div className="mb-4">
           {showPhotoForm && (
             <form onSubmit={handlePhotoSubmit} className="space-y-4">

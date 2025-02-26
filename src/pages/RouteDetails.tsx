@@ -482,7 +482,7 @@ export function RouteDetails() {
           <RoutePhotos
             routeId={route.id}
             photos={route.route_photos || []}
-            isOwner={user?.id === route.created_by}
+            isAuthenticated={!!user}
             onPhotosUpdated={handlePhotosUpdated}
           />
 
