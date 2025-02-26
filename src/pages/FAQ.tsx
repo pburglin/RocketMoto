@@ -32,7 +32,8 @@ export function FAQ() {
               </ul>
             </p>
             <p className="mt-2 text-sm text-yellow-700 dark:text-yellow-200">
-              You are not required to, but if you want any of these features please enable location access in your browser settings.
+              You are not required to, but if you want any of these features please either enable location access in your browser settings
+              or manually enter your zipcode or nearby landmark as your location in the landing page.
             </p>
           </div>
         </div>

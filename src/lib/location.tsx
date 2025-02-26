@@ -10,6 +10,7 @@ type Coordinates = {
 type LocationContextType = {
   currentLocation: Coordinates | null;
   getCurrentLocation: () => Promise<void>;
+  setManualLocation: (lat: number, lng: number) => Promise<void>;
   loading: boolean;
   error: string | null;
 };
@@ -68,9 +69,38 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function setManualLocation(lat: number, lng: number): Promise<void> {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const coordinates = { lat, lng };
+      setCurrentLocation(coordinates);
+
+      // Update user's location in the database if logged in
+      if (user) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            location: `${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}`
+          })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Error updating user location:', updateError);
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to set manual location');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const value = {
     currentLocation,
     getCurrentLocation,
+    setManualLocation,
     loading,
     error
   };

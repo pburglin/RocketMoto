@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Search, AlertCircle, ThumbsUp, Clock } from 'lucide-react';
+import { Search, AlertCircle, ThumbsUp, Clock, X } from 'lucide-react';
 import { useLocation } from '../lib/location';
 import { useAuth } from '../lib/auth';
+import { useGeocoding } from '../lib/useGeocoding';
 import { supabase } from '../lib/supabase';
-import { RouteCard } from '../components/RouteCard';
+import { RouteCard, Route } from '../components/RouteCard';
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-  const { currentLocation, getCurrentLocation, loading, error } = useLocation();
-  const { user, profile } = useAuth();
-  const [popularRoutes, setPopularRoutes] = useState<any[]>([]);
-  const [newRoutes, setNewRoutes] = useState<any[]>([]);
+  const { currentLocation, setManualLocation, error } = useLocation();
+  const { profile } = useAuth();
+  const [popularRoutes, setPopularRoutes] = useState<Route[]>([]);
+  const [newRoutes, setNewRoutes] = useState<Route[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [addressInput, setAddressInput] = useState('');
+  const [showLocationForm, setShowLocationForm] = useState(true);
+  const { getCoordinates, loading: geocodingLoading } = useGeocoding();
 
   useEffect(() => {
     async function fetchRoutes() {
@@ -25,9 +29,9 @@ export function Home() {
         // First get routes within distance
         const { data: nearbyRouteIds, error: distanceError } = await supabase
           .rpc('get_routes_within_distance', {
-          p_lat: userLat,
-          p_lng: userLng,
-          p_distance: maxDistance
+            p_lat: userLat,
+            p_lng: userLng,
+            p_distance: maxDistance
           });
 
         if (distanceError) {
@@ -44,7 +48,7 @@ export function Home() {
               route_tags (tag),
               route_photos (photo_url, order)
             `)
-            .in('id', nearbyRouteIds.map(r => r.id));
+            .in('id', nearbyRouteIds.map((r: { id: string }) => r.id));
 
           if (routesError) {
             console.error('Error fetching route details:', routesError);
@@ -77,12 +81,20 @@ export function Home() {
     fetchRoutes();
   }, [currentLocation, profile?.location]);
 
-  function handleSearch(e: React.FormEvent) {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
     }
-  }
+  };
+
+  const handleAddressSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await getCoordinates(addressInput);
+    if (result) {
+      await setManualLocation(result.lat, result.lon);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -112,10 +124,42 @@ export function Home() {
               <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
             </button>
           </form>
-          {error && (
-            <div className="mt-2 flex items-center justify-center text-red-600">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              <span className="text-sm">{error}</span>
+
+          {error && showLocationForm && (
+            <div className="mt-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center text-red-600">
+                      <AlertCircle className="h-5 w-5 mr-2" />
+                      <span className="text-sm">{error}</span>
+                    </div>
+                    <button
+                      onClick={() => setShowLocationForm(false)}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      aria-label="Close form"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <form onSubmit={handleAddressSubmit} className="flex flex-col gap-3">
+                    <input
+                      type="text"
+                      value={addressInput}
+                      onChange={(e) => setAddressInput(e.target.value)}
+                      placeholder="Enter your address or ZIP code to improve route suggestions..."
+                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                    <button
+                      type="submit"
+                      disabled={geocodingLoading}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {geocodingLoading ? 'Setting Location...' : 'Set Location'}
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
           )}
         </div>
