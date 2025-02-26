@@ -74,18 +74,32 @@ export function RoutePhotos({ routeId, photos, isOwner, onPhotosUpdated }: Route
         throw new Error('Please provide either a photo file or URL');
       }
 
-      const { data: newPhoto, error: uploadError } = await supabase
+      const timestamp = new Date().toISOString();
+      
+      // First insert the photo
+      const { error: insertError } = await supabase
         .from('route_photos')
         .insert([{
           route_id: routeId,
           ...photoData,
           caption: photoCaption,
-          order: nextOrder
-        }])
-        .select()
+          order: nextOrder,
+          created_at: timestamp
+        }]);
+
+      if (insertError) throw insertError;
+
+      // Then fetch the most recently created photo for this route
+      const { data: newPhoto, error: selectError } = await supabase
+        .from('route_photos')
+        .select('*')
+        .eq('route_id', routeId)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .single();
 
-      if (uploadError) throw uploadError;
+      if (selectError) throw selectError;
+      if (!newPhoto) throw new Error('Failed to create photo');
 
       onPhotosUpdated([...photos, newPhoto]);
       setPhotoUrl('');
