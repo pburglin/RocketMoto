@@ -68,45 +68,73 @@ export function useRating(routeId: string) {
     try {
       if (userRating === rating) {
         // Remove rating
-        const { error } = await supabase
-          .from('route_ratings')
-          .delete()
-          .eq('route_id', routeId)
-          .eq('user_id', session.session.user.id);
+        const [ratingResult, routeResult] = await Promise.all([
+          supabase
+            .from('route_ratings')
+            .delete()
+            .eq('route_id', routeId)
+            .eq('user_id', session.session.user.id),
+          supabase.rpc('decrement_route_rating', {
+            p_route_id: routeId,
+            p_is_upvote: rating === 'up'
+          })
+        ]);
 
-        if (error) throw error;
+        if (ratingResult.error) throw ratingResult.error;
+        if (routeResult.error) throw routeResult.error;
+
         setUserRating(null);
-        setUpvotes(prev => prev - (rating === 'up' ? 1 : 0));
-        setDownvotes(prev => prev - (rating === 'down' ? 1 : 0));
+        if (userRating === 'up') {
+          setUpvotes(prev => prev - 1);
+        } else if (userRating === 'down') {
+          setDownvotes(prev => prev - 1);
+        }
       } else if (userRating) {
         // Update rating
-        const { error } = await supabase
-          .from('route_ratings')
-          .update({ rating_type: rating })
-          .eq('route_id', routeId)
-          .eq('user_id', session.session.user.id);
+        const [ratingResult, routeResult] = await Promise.all([
+          supabase
+            .from('route_ratings')
+            .update({ rating_type: rating })
+            .eq('route_id', routeId)
+            .eq('user_id', session.session.user.id),
+          supabase.rpc('update_route_rating', {
+            p_route_id: routeId,
+            p_old_is_upvote: userRating === 'up',
+            p_new_is_upvote: rating === 'up'
+          })
+        ]);
 
-        if (error) throw error;
+        if (ratingResult.error) throw ratingResult.error;
+        if (routeResult.error) throw routeResult.error;
+
         setUserRating(rating);
-        if (rating === 'up') {
-          setUpvotes(prev => prev + 1);
-          setDownvotes(prev => prev - 1);
-        } else {
+        if (userRating === 'up' && rating === 'down') {
           setUpvotes(prev => prev - 1);
           setDownvotes(prev => prev + 1);
+        } else if (userRating === 'down' && rating === 'up') {
+          setUpvotes(prev => prev + 1);
+          setDownvotes(prev => prev - 1);
         }
       } else {
         // Insert new rating
-        const { error } = await supabase
-          .from('route_ratings')
-          .insert({
-            route_id: routeId,
-            user_id: session.session.user.id,
-            rating_type: rating,
-            rating: rating === 'up' // Convert rating type to boolean for the rating column
-          });
+        const [ratingResult, routeResult] = await Promise.all([
+          supabase
+            .from('route_ratings')
+            .insert({
+              route_id: routeId,
+              user_id: session.session.user.id,
+              rating_type: rating,
+              rating: rating === 'up' // Convert rating type to boolean for the rating column
+            }),
+          supabase.rpc('increment_route_rating', {
+            p_route_id: routeId,
+            p_is_upvote: rating === 'up'
+          })
+        ]);
 
-        if (error) throw error;
+        if (ratingResult.error) throw ratingResult.error;
+        if (routeResult.error) throw routeResult.error;
+
         setUserRating(rating);
         if (rating === 'up') {
           setUpvotes(prev => prev + 1);
