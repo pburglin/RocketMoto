@@ -40,11 +40,11 @@ export function useRating(routeId: string) {
           .from('route_ratings')
           .select('rating_type')
           .eq('route_id', routeId)
-          .eq('user_id', session.session.user.id)
-          .single();
+          .eq('user_id', session.session.user.id);
 
         if (error) throw error;
-        setUserRating(data?.rating_type as Rating || null);
+        // If no rating exists, data will be an empty array
+        setUserRating((data?.[0]?.rating_type as Rating) || null);
       } catch (err) {
         console.error('Error fetching user rating:', err);
       } finally {

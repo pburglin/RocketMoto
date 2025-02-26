@@ -91,7 +91,7 @@ function useRouteData(id: string | undefined, user: User | null) {
             route_tags (tag),
             route_photos (id, photo_url, photo_blob, caption, order, created_at)
           `).eq('id', id).single(),
-          user ? supabase.from('completed_routes').select('id').eq('route_id', id).eq('user_id', user.id).single() : null
+          user ? supabase.from('completed_routes').select('id').eq('route_id', id).eq('user_id', user.id) : null
         ]);
 
         setBookmarkCount(bookmarksData.count || 0);
@@ -113,7 +113,7 @@ function useRouteData(id: string | undefined, user: User | null) {
           }
         }
 
-        setIsCompleted(!!completedRouteData?.data);
+        setIsCompleted((completedRouteData?.data ?? []).length > 0);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load route details');
       } finally {
