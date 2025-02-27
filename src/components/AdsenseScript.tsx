@@ -11,11 +11,6 @@ export function AdsenseScript() {
       existingScript.remove();
     }
 
-    // Only inject script for non-authenticated users
-    if (!user) {
-      const script = '<script id="adsense-script" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8932288265943816" crossorigin="anonymous"></script>';
-      document.head.insertAdjacentHTML('beforeend', script);
-    }
   }, [user]);
 
   return null;
