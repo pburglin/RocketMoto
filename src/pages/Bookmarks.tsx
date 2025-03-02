@@ -35,7 +35,7 @@ export function Bookmarks() {
           route:routes (
             *,
             route_tags (tag),
-            route_photos (photo_url, order, created_at)
+            route_photos (photo_url, photo_blob, order, created_at)
           )
         `)
         .eq('user_id', user.id)

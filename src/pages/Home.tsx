@@ -46,7 +46,7 @@ export function Home() {
             .select(`
               *,
               route_tags (tag),
-              route_photos (photo_url, order)
+              route_photos (photo_url, photo_blob, order, created_at)
             `)
             .in('id', nearbyRouteIds.map((r: { id: string }) => r.id));
 
