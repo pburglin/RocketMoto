@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigation as NavigationIcon, Map, Search, ThumbsUp, Camera, Tag, AlertTriangle, Flag } from 'lucide-react';
+import { Navigation as NavigationIcon, Map, Search, ThumbsUp, Camera, Tag, AlertTriangle, Flag, BookOpen, Globe, MapPin } from 'lucide-react';
 
 export function FAQ() {
   return (
@@ -255,6 +255,54 @@ export function FAQ() {
                   <br/>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
                     In Safari, you can find the translation option in the "View" menu.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Other apps from this author</h2>
+          
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <BookOpen className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <a href="https://Eventfy.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Eventfy.com</a>
+                  </h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Use AI to create interactive stories with graphics and multi-player.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <Globe className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <a href="https://SiteCheck.us" target="_blank" rel="noopener noreferrer" className="hover:underline">SiteCheck.us</a>
+                  </h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Track website availability status, check SSL certificates and more.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <div className="flex items-start mb-4">
+                <MapPin className="h-6 w-6 text-indigo-600 mt-1 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <a href="https://RocketMap.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:underline">RocketMap.netlify.app</a>
+                  </h3>
+                  <p className="mt-2 text-gray-600 dark:text-gray-300">
+                    Track your position against property boundaries.
                   </p>
                 </div>
               </div>
