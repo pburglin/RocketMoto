@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">motorcycle-route-explorer</string>
+    <string name="title_activity_main">motorcycle-route-explorer</string>
+    <string name="package_name">us.rocketmoto.routeexplorer</string>
+    <string name="custom_url_scheme">us.rocketmoto.routeexplorer</string>
+</resources>
