@@ -38,7 +38,7 @@ export function Leaderboards() {
         if (authorsError) throw authorsError;
 
         setTopRoutes(routesData || []);
-        console.log('Authors data:', authorsData);
+        //console.log('Authors data:', authorsData);
         setTopAuthors(authorsData || []);
       } catch (error) {
         console.error('Error fetching leaderboards:', error);
